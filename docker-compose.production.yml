@@ -1,0 +1,67 @@
+x-game-server: &game-server
+  image: ${GAME_SERVER_IMAGE:?set GAME_SERVER_IMAGE to the immutable production image tag}
+  restart: unless-stopped
+  environment: &game-environment
+    GAME_ENVIRONMENT: production
+    GAME_HTTP_ADDRESS: ":8080"
+    GAME_GRPC_LISTEN_ADDRESS: ":9090"
+    GAME_REDIS_ADDR: ${GAME_REDIS_ADDR:?set the private Redis address}
+    GAME_REDIS_PASSWORD: ${GAME_REDIS_PASSWORD:?inject the Redis password from secret storage}
+    GAME_MONGO_URI: ${GAME_MONGO_URI:?inject the MongoDB URI from secret storage}
+    GAME_MONGO_DATABASE: ${GAME_MONGO_DATABASE:-game01}
+    GAME_MONGO_AUTH_MECHANISM: ${GAME_MONGO_AUTH_MECHANISM:-SCRAM-SHA-256}
+    GAME_MONGO_AUTH_SOURCE: ${GAME_MONGO_AUTH_SOURCE:-admin}
+    GAME_DISCOVERY_PROVIDER: etcd
+    GAME_DISCOVERY_ENDPOINTS: ${GAME_DISCOVERY_ENDPOINTS:?set private etcd endpoints}
+  healthcheck:
+    test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1:8080/healthz"]
+    interval: 10s
+    timeout: 3s
+    retries: 3
+    start_period: 15s
+  networks:
+    - game01-private
+
+services:
+  gateway:
+    <<: *game-server
+    command: ["--config", "/app/config/config.gateway.yaml"]
+    ports:
+      - "${GAME_HTTP_PORT:-8080}:8080"
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: ${GAME_GATEWAY_INSTANCE_ID:?set a unique Gateway instance ID}
+      GAME_ID_NODE_ID: ${GAME_GATEWAY_ID_NODE_ID:?set a unique node ID from 0 through 1023}
+      GAME_GRPC_ADVERTISE_ADDRESS: ${GAME_GATEWAY_GRPC_ADVERTISE_ADDRESS:?set Gateway's private gRPC address}
+
+  usercenter:
+    <<: *game-server
+    command: ["--config", "/app/config/config.usercenter.yaml"]
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: ${GAME_USERCENTER_INSTANCE_ID:?set a unique UserCenter instance ID}
+      GAME_ID_NODE_ID: ${GAME_USERCENTER_ID_NODE_ID:?set a unique node ID from 0 through 1023}
+      GAME_GRPC_ADVERTISE_ADDRESS: ${GAME_USERCENTER_GRPC_ADVERTISE_ADDRESS:?set UserCenter's private gRPC address}
+
+  lobby:
+    <<: *game-server
+    command: ["--config", "/app/config/config.lobby.yaml"]
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: ${GAME_LOBBY_INSTANCE_ID:?set a unique Lobby instance ID}
+      GAME_ID_NODE_ID: ${GAME_LOBBY_ID_NODE_ID:?set a unique node ID from 0 through 1023}
+      GAME_GRPC_ADVERTISE_ADDRESS: ${GAME_LOBBY_GRPC_ADVERTISE_ADDRESS:?set Lobby's private gRPC address}
+
+  battle:
+    <<: *game-server
+    command: ["--config", "/app/config/config.battle.yaml"]
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: ${GAME_BATTLE_INSTANCE_ID:?set a unique Battle instance ID}
+      GAME_ID_NODE_ID: ${GAME_BATTLE_ID_NODE_ID:?set a unique node ID from 0 through 1023}
+      GAME_GRPC_ADVERTISE_ADDRESS: ${GAME_BATTLE_GRPC_ADVERTISE_ADDRESS:?set Battle's private gRPC address}
+
+networks:
+  game01-private:
+    external: true
+    name: ${GAME_DOCKER_NETWORK:-game01-private}

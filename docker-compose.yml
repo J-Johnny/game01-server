@@ -1,0 +1,152 @@
+x-game-server: &game-server
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: game01-server:local
+  restart: unless-stopped
+  depends_on:
+    redis:
+      condition: service_healthy
+    mongo:
+      condition: service_healthy
+    etcd:
+      condition: service_healthy
+  environment: &game-environment
+    GAME_ENVIRONMENT: local
+    GAME_HTTP_ADDRESS: ":8080"
+    GAME_GRPC_LISTEN_ADDRESS: ":9090"
+    GAME_REDIS_ADDR: "redis:6379"
+    GAME_MONGO_URI: "mongodb://mongo:27017"
+    GAME_MONGO_DATABASE: "game01"
+    GAME_DISCOVERY_PROVIDER: etcd
+    GAME_DISCOVERY_ENDPOINTS: "etcd:2379"
+  healthcheck:
+    test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1:8080/healthz"]
+    interval: 10s
+    timeout: 3s
+    retries: 3
+    start_period: 10s
+
+services:
+  gateway:
+    <<: *game-server
+    command: ["--config", "/app/config/config.gateway.yaml"]
+    ports:
+      - "${GAME_GATEWAY_HTTP_PORT:-8080}:8080"
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: gateway-local
+      GAME_ID_NODE_ID: "1"
+      GAME_GRPC_ADVERTISE_ADDRESS: "gateway:9090"
+
+  usercenter:
+    <<: *game-server
+    command: ["--config", "/app/config/config.usercenter.yaml"]
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: usercenter-local
+      GAME_ID_NODE_ID: "2"
+      GAME_GRPC_ADVERTISE_ADDRESS: "usercenter:9090"
+
+  lobby:
+    <<: *game-server
+    command: ["--config", "/app/config/config.lobby.yaml"]
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: lobby-local
+      GAME_ID_NODE_ID: "3"
+      GAME_GRPC_ADVERTISE_ADDRESS: "lobby:9090"
+
+  battle:
+    <<: *game-server
+    command: ["--config", "/app/config/config.battle.yaml"]
+    environment:
+      <<: *game-environment
+      GAME_INSTANCE_ID: battle-local
+      GAME_ID_NODE_ID: "4"
+      GAME_GRPC_ADVERTISE_ADDRESS: "battle:9090"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.16
+    restart: unless-stopped
+    command:
+      - /usr/local/bin/etcd
+      - --name=etcd0
+      - --advertise-client-urls=http://etcd:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --initial-advertise-peer-urls=http://etcd:2380
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-cluster=etcd0=http://etcd:2380
+      - --initial-cluster-state=new
+      - --initial-cluster-token=game01-etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  loki:
+    image: grafana/loki:3.5.0
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./observability/loki/loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+
+  alloy:
+    image: grafana/alloy:v1.9.1
+    restart: unless-stopped
+    command: ["run", "/etc/alloy/config.alloy"]
+    depends_on:
+      - loki
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    restart: unless-stopped
+    depends_on:
+      - loki
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_DEFAULT_LANGUAGE: zh-Hans
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+volumes:
+  redis-data:
+  mongo-data:
+  loki-data:
+  grafana-data:

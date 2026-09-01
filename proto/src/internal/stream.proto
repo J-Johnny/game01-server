@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package game01.internal;
+
+option go_package = "server/proto/gen/internalpb;internalpb";
+
+enum ServiceType {
+  SERVICE_TYPE_UNSPECIFIED = 0;
+  SERVICE_TYPE_GATEWAY = 1;
+  SERVICE_TYPE_LOBBY = 2;
+  SERVICE_TYPE_USERCENTER = 3;
+  SERVICE_TYPE_BATTLE = 4;
+}
+
+enum EnvelopeKind {
+  ENVELOPE_KIND_UNSPECIFIED = 0;
+  ENVELOPE_KIND_HELLO = 1;
+  ENVELOPE_KIND_REQUEST = 2;
+  ENVELOPE_KIND_RESPONSE = 3;
+  ENVELOPE_KIND_EVENT = 4;
+  ENVELOPE_KIND_ERROR = 5;
+}
+
+message InternalEnvelope {
+  EnvelopeKind kind = 1;
+  uint64 request_id = 2;
+  ServiceType source_service = 3;
+  ServiceType target_service = 4;
+  uint32 message_id = 5;
+  string player_id = 6;
+  uint64 room_id = 7;
+  bytes payload = 8;
+  uint32 error_code = 9;
+  string error_message = 10;
+}
+
+message Hello {
+  ServiceType service_type = 1;
+  string instance_id = 2;
+}
+
+service ServiceStream {
+  rpc Connect(stream InternalEnvelope) returns (stream InternalEnvelope);
+}

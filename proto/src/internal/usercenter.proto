@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package game01.internal;
+
+option go_package = "server/proto/gen/internalpb;internalpb";
+
+enum UserCenterMessageId {
+  USER_CENTER_MESSAGE_ID_UNSPECIFIED = 0;
+  USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_REQUEST = 1001;
+  USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_RESPONSE = 1101;
+  USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_REQUEST = 1002;
+  USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_RESPONSE = 1102;
+  USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST = 1003;
+  USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE = 1103;
+  USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST = 1004;
+  USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE = 1104;
+}
+
+message GuestAuthenticateRequest {
+  string install_id = 1;
+  string client_platform = 2;
+  string client_version = 3;
+}
+
+message GuestAuthenticateResponse {
+  string account_id = 1;
+  string refresh_token = 2;
+  int64 refresh_token_expire_at_unix = 3;
+  bool created = 4;
+}
+
+message RefreshAuthenticateRequest {
+  string refresh_token = 1;
+  string install_id = 2;
+}
+
+message RefreshAuthenticateResponse {
+  string account_id = 1;
+  string refresh_token = 2;
+  int64 refresh_token_expire_at_unix = 3;
+}
+
+message RevokeRefreshTokenRequest {
+  string account_id = 1;
+  string refresh_token = 2;
+}
+
+message RevokeRefreshTokenResponse {}
+
+message PasswordAuthenticateRequest {
+  string username = 1;
+  string password = 2;
+  string install_id = 3;
+}
+
+message PasswordAuthenticateResponse {
+  string account_id = 1;
+  string refresh_token = 2;
+  int64 refresh_token_expire_at_unix = 3;
+}

@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package game01.client.gateway;
+
+option go_package = "server/proto/gen/client/gateway;gatewaypb";
+option csharp_namespace = "Game01.Protocol.Client.Gateway";
+
+enum ClientMessageId {
+  CLIENT_MESSAGE_ID_UNSPECIFIED = 0;
+  CLIENT_MESSAGE_ID_LOGIN_REQUEST = 1;
+  CLIENT_MESSAGE_ID_RESUME_REQUEST = 2;
+  CLIENT_MESSAGE_ID_REFRESH_LOGIN_REQUEST = 3;
+  CLIENT_MESSAGE_ID_LOGIN_RESPONSE = 101;
+  CLIENT_MESSAGE_ID_RESUME_RESPONSE = 102;
+  CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE = 103;
+  CLIENT_MESSAGE_ID_ERROR_RESPONSE = 900;
+}
+
+enum AuthProvider {
+  AUTH_PROVIDER_UNSPECIFIED = 0;
+  AUTH_PROVIDER_GUEST = 1;
+  AUTH_PROVIDER_STEAM = 2;
+  AUTH_PROVIDER_APPLE = 3;
+  AUTH_PROVIDER_GOOGLE = 4;
+  AUTH_PROVIDER_WECHAT = 5;
+  AUTH_PROVIDER_PASSWORD = 6;
+}
+
+message Envelope {
+  ClientMessageId message_id = 1;
+  uint64 request_id = 2;
+  string session_id = 3;
+  bytes payload = 4;
+}
+
+message LoginRequest {
+  AuthProvider provider = 1;
+  string credential = 2;
+  string install_id = 3;
+  string username = 4;
+  string password = 5;
+}
+
+message LoginResponse {
+  string account_id = 1;
+  string session_id = 2;
+  string resume_token = 3;
+  uint64 connection_epoch = 4;
+  string refresh_token = 5;
+  int64 refresh_token_expire_at_unix = 6;
+}
+
+message RefreshLoginRequest {
+  string refresh_token = 1;
+  string install_id = 2;
+}
+
+message RefreshLoginResponse {
+  string account_id = 1;
+  string session_id = 2;
+  string resume_token = 3;
+  uint64 connection_epoch = 4;
+  string refresh_token = 5;
+  int64 refresh_token_expire_at_unix = 6;
+}
+
+message ResumeRequest {
+  string session_id = 1;
+  string resume_token = 2;
+}
+
+message ResumeResponse {
+  string account_id = 1;
+  string session_id = 2;
+  string resume_token = 3;
+  uint64 connection_epoch = 4;
+  string player_id = 5;
+}
+
+message ErrorResponse {
+  uint32 code = 1;
+  string message = 2;
+}

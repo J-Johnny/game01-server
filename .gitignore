@@ -1,0 +1,12 @@
+.cache/
+*.local.yaml
+.env
+.env.*
+!.env.production.example
+
+# Local editor and OS files
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini
