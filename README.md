@@ -61,7 +61,7 @@ services/<name>/
 
 - `proto/src/` 保存人工维护的 `.proto` 文件，是协议的唯一事实来源。
 - `proto/gen/` 保存工具生成的 Go 代码，不手工修改。
-- 协议按业务域拆分，例如 `common.proto`、`lobby.proto`、`battle.proto` 和 `usercenter.proto`。
+- 协议按客户端公开协议和服务间内部协议拆分，当前包括 `client/gateway.proto`、`client/state/state.proto` 和 `internal/*.proto`。
 - 协议只描述跨进程或客户端/服务端契约，不泄露服务内部数据模型。
 
 ## 依赖方向
@@ -166,7 +166,7 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 
 服务使用 JSON `slog` 输出到容器标准输出。Gin HTTP 请求、WebSocket 连接和内部 gRPC Streaming 连接/消息均带有结构化字段，并通过 `X-Request-ID` 关联请求。密码、Refresh Token、Authorization 和完整 Protobuf 内容不会写入日志。
 
-本地观测组件为 Grafana、Loki 和 Grafana Alloy：Alloy 读取 Docker 容器日志并发送到 Loki，Grafana 自动配置 Loki 数据源和 `Game01 Logs` 面板。日志标签只保留低基数字段（服务、环境、协议、级别）；`request_id`、账号和会话字段保留在 JSON 内容中用于查询。
+本地观测组件为 Prometheus、Alertmanager、Grafana、Loki 和 Grafana Alloy：Alloy 读取 Docker 容器日志并发送到 Loki，Prometheus 抓取各角色的 `/metrics`，Alertmanager 处理可靠性告警，Grafana 自动配置 Loki/Prometheus 数据源及 `Game01 Logs`、`Game01 Reliability` 面板。重试、限流和熔断指标只使用低基数标签（服务、目标服务、操作、结果和有限错误原因）；`request_id`、账号和会话字段保留在 JSON 内容中用于查询。Prometheus 在本地映射到 `9091`，Alertmanager 映射到 `9093`，生产环境应替换为外部监控和通知配置。
 
 幂等请求在执行期间会自动续租；UserCenter 启动时会清理已过期的 pending 记录，使业务事务已提交但进程在幂等 Complete 前崩溃的请求可以在下一次重试时重新执行并完成幂等记录。
 

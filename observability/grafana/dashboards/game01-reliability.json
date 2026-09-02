@@ -1,0 +1,63 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "targets": [{"expr": "sum by (caller_service, target_service, operation) (rate(game01_reliability_request_retries_total[5m]))", "legendFormat": "{{caller_service}} -> {{target_service}} / {{operation}}", "refId": "A"}],
+      "title": "Internal Request Retries / s",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "targets": [{"expr": "sum by (caller_service, target_service, operation, result) (rate(game01_reliability_circuit_breaker_calls_total[5m]))", "legendFormat": "{{caller_service}} -> {{target_service}} / {{operation}} / {{result}}", "refId": "A"}],
+      "title": "Circuit Breaker Calls",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "targets": [{"expr": "game01_reliability_circuit_breaker_state", "legendFormat": "{{caller_service}} -> {{target_service}} / {{operation}}", "refId": "A"}],
+      "title": "Circuit Breaker State (0 Closed, 1 Open, 2 Half-open)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 4,
+      "targets": [{"expr": "sum by (scope, decision) (rate(game01_gateway_rate_limit_decisions_total[5m]))", "legendFormat": "{{scope}} / {{decision}}", "refId": "A"}],
+      "title": "Rate Limit Decisions",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "id": 5,
+      "targets": [{"expr": "sum by (caller_service, target_service, operation) (rate(game01_reliability_request_retry_exhausted_total[5m]))", "legendFormat": "{{caller_service}} -> {{target_service}} / {{operation}}", "refId": "A"}],
+      "title": "Retry Exhaustion / s",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "id": 6,
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, caller_service, target_service, operation) (rate(game01_reliability_request_duration_seconds_bucket[5m])))", "legendFormat": "{{caller_service}} -> {{target_service}} / {{operation}}", "refId": "A"}],
+      "title": "Internal Request P95 Latency",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["game01", "reliability"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timezone": "browser",
+  "title": "Game01 Reliability",
+  "uid": "game01-reliability",
+  "version": 1
+}

@@ -15,9 +15,10 @@ type TokenBucket struct {
 	rate     float64
 	tokens   float64
 	last     time.Time
+	observer RateLimitObserver
 }
 
-func NewTokenBucket(capacity int, refillPerSecond float64) *TokenBucket {
+func NewTokenBucket(capacity int, refillPerSecond float64, observers ...RateLimitObserver) *TokenBucket {
 	if capacity < 1 {
 		capacity = 1
 	}
@@ -25,7 +26,11 @@ func NewTokenBucket(capacity int, refillPerSecond float64) *TokenBucket {
 		refillPerSecond = float64(capacity)
 	}
 	now := time.Now()
-	return &TokenBucket{capacity: float64(capacity), rate: refillPerSecond, tokens: float64(capacity), last: now}
+	var observer RateLimitObserver
+	if len(observers) > 0 {
+		observer = observers[0]
+	}
+	return &TokenBucket{capacity: float64(capacity), rate: refillPerSecond, tokens: float64(capacity), last: now, observer: observer}
 }
 
 func (b *TokenBucket) Allow() bool {
@@ -37,13 +42,17 @@ func (b *TokenBucket) AllowN(n int) bool {
 		return true
 	}
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	b.refill(time.Now())
-	if b.tokens < float64(n) {
-		return false
+	allowed := b.tokens >= float64(n)
+	if allowed {
+		b.tokens -= float64(n)
 	}
-	b.tokens -= float64(n)
-	return true
+	observer := b.observer
+	b.mu.Unlock()
+	if observer != nil {
+		observer.OnDecision(allowed)
+	}
+	return allowed
 }
 
 func (b *TokenBucket) Wait(ctx context.Context) error {

@@ -44,10 +44,11 @@ func NewModule(deps app.Dependencies) *Module {
 		MaxAttempts:  deps.Config.Gateway.RetryAttempts,
 		InitialDelay: 50 * time.Millisecond,
 		MaxDelay:     500 * time.Millisecond,
+		Observer:     deps.Metrics.RetryObserver("gateway", "usercenter", "authenticate", classifyUserCenterError),
 		ShouldRetry: func(err error) bool {
 			return errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout)
 		},
-	}, reliability.NewCircuitBreaker(deps.Config.Gateway.CircuitFailures, deps.Config.Gateway.CircuitReset))
+	}, reliability.NewCircuitBreaker(deps.Config.Gateway.CircuitFailures, deps.Config.Gateway.CircuitReset, deps.Metrics.CircuitObserver("gateway", "usercenter", "authenticate")))
 	players := NewLobbyPlayerResolver(func() (*streaming.Client, bool) {
 		return base.Client("lobby")
 	})
@@ -65,8 +66,25 @@ func NewModule(deps app.Dependencies) *Module {
 		_ = deps.Redis.Publish(context.Background(), "game01:gateway:preempt", event).Err()
 	})
 	module.handler.SetRateLimit(deps.Config.Gateway.RateLimitBurst, deps.Config.Gateway.RateLimitPerSecond)
+	module.handler.SetRateLimitObserver(deps.Metrics.RateLimitObserver("websocket_connection"))
 	module.handler.SetAccepting(module.IsReady)
 	return module
+}
+
+func classifyUserCenterError(err error) string {
+	if errors.Is(err, streaming.ErrConnectionClosed) {
+		return "connection_closed"
+	}
+	if errors.Is(err, streaming.ErrRequestTimeout) {
+		return "request_timeout"
+	}
+	if errors.Is(err, context.Canceled) {
+		return "context_canceled"
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "context_deadline_exceeded"
+	}
+	return "error"
 }
 
 func (m *Module) restoreState(ctx context.Context, connection *Connection, playerID, sessionID string, stateVersions map[string]uint64) {

@@ -1,0 +1,10 @@
+route:
+  receiver: game01-default
+  group_by: ["alertname", "service", "target_service", "operation"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: game01-default
+    # Configure webhook_configs, email_configs, or a chat integration per environment.

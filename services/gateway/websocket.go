@@ -90,13 +90,14 @@ func (c *Connection) SessionEpoch() uint64 {
 }
 
 type Handler struct {
-	upgrader       websocket.Upgrader
-	dispatch       MessageDispatcher
-	sessionManager *session.Manager
-	accepting      func() bool
-	connections    sync.Map
-	rateLimitBurst int
-	rateLimitRate  float64
+	upgrader          websocket.Upgrader
+	dispatch          MessageDispatcher
+	sessionManager    *session.Manager
+	accepting         func() bool
+	connections       sync.Map
+	rateLimitBurst    int
+	rateLimitRate     float64
+	rateLimitObserver reliability.RateLimitObserver
 }
 
 func NewHandler(dispatch MessageDispatcher, sessionManagers ...*session.Manager) *Handler {
@@ -121,6 +122,10 @@ func (h *Handler) SetRateLimit(burst int, perSecond float64) {
 	h.rateLimitRate = perSecond
 }
 
+func (h *Handler) SetRateLimitObserver(observer reliability.RateLimitObserver) {
+	h.rateLimitObserver = observer
+}
+
 func (h *Handler) RegisterRoutes(r gin.IRouter) {
 	r.GET("/ws", h.Handle)
 }
@@ -143,7 +148,7 @@ func (h *Handler) Handle(c *gin.Context) {
 		ws:          ws,
 		send:        make(chan []byte, 64),
 		done:        make(chan struct{}),
-		rateLimiter: reliability.NewTokenBucket(h.rateLimitBurst, h.rateLimitRate),
+		rateLimiter: reliability.NewTokenBucket(h.rateLimitBurst, h.rateLimitRate, h.rateLimitObserver),
 	}
 	connectionID, err := newConnectionID()
 	if err != nil {

@@ -17,6 +17,7 @@ import (
 	"server/common/idgen"
 	"server/common/logging"
 	commonmongo "server/common/mongodb"
+	"server/common/observability"
 	commonredis "server/common/redis"
 	"server/common/streaming"
 	"server/services/battle"
@@ -77,9 +78,11 @@ func main() {
 		Redis:       redisClient,
 		Mongo:       mongoResources,
 		Registry:    discoveryResources.Registry,
-		IDGenerator: idGenerator}
+		IDGenerator: idGenerator,
+		Metrics:     observability.NewMetrics()}
 	r := gin.New()
 	r.Use(gin.Recovery(), logging.GinAccess(logger))
+	r.GET("/metrics", gin.WrapH(deps.Metrics.Handler()))
 	r.GET("/healthz", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})

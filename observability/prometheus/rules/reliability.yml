@@ -1,0 +1,48 @@
+groups:
+  - name: game01-reliability
+    rules:
+      - alert: Game01RequestRetryExhausted
+        expr: sum by (caller_service, target_service, operation, reason) (rate(game01_reliability_request_retry_exhausted_total[5m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: game01
+        annotations:
+          summary: "Game01 internal request retries exhausted"
+          description: "{{ $labels.caller_service }} cannot reliably call {{ $labels.target_service }} for {{ $labels.operation }} (reason={{ $labels.reason }})."
+
+      - alert: Game01CircuitBreakerOpen
+        expr: game01_reliability_circuit_breaker_state == 1
+        for: 2m
+        labels:
+          severity: critical
+          service: game01
+        annotations:
+          summary: "Game01 circuit breaker is open"
+          description: "Circuit {{ $labels.caller_service }} -> {{ $labels.target_service }} ({{ $labels.operation }}) has been open for more than two minutes."
+
+      - alert: Game01RateLimitRejectionHigh
+        expr: |
+          (
+            sum(rate(game01_gateway_rate_limit_decisions_total{decision="rejected"}[5m]))
+            /
+            clamp_min(sum(rate(game01_gateway_rate_limit_decisions_total[5m])), 1)
+          ) > 0.20
+          and sum(rate(game01_gateway_rate_limit_decisions_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: game01
+        annotations:
+          summary: "Game01 rate-limit rejection ratio is high"
+          description: "More than 20% of Gateway requests have been rate limited during the last five minutes."
+
+      - alert: Game01InternalRequestLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le, caller_service, target_service, operation) (rate(game01_reliability_request_duration_seconds_bucket[5m]))) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: game01
+        annotations:
+          summary: "Game01 internal request P95 latency is high"
+          description: "P95 latency for {{ $labels.caller_service }} -> {{ $labels.target_service }} ({{ $labels.operation }}) exceeds one second."

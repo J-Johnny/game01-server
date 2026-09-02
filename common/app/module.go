@@ -8,6 +8,7 @@ import (
 	"server/common/discovery"
 	"server/common/idgen"
 	"server/common/mongodb"
+	"server/common/observability"
 
 	"github.com/gin-gonic/gin"
 	redis "github.com/redis/go-redis/v9"
@@ -20,6 +21,7 @@ type Dependencies struct {
 	Mongo       mongodb.IMongoModule
 	Registry    discovery.Registry
 	IDGenerator *idgen.Generator
+	Metrics     *observability.Metrics
 }
 
 type Module interface {

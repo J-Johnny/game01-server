@@ -39,13 +39,3 @@ message SettlementResponse {
   uint64 asset_version = 5;
   bool replayed = 6;
 }
-
-message LobbyPlayerSnapshot {
-  string player_id = 1;
-  string account_id = 2;
-  string nickname = 3;
-  string region = 4;
-  uint64 profile_version = 5;
-  uint64 asset_version = 6;
-  map<string, int64> currency = 7;
-}

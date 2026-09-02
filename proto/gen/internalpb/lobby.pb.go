@@ -348,98 +348,6 @@ func (x *SettlementResponse) GetReplayed() bool {
 	return false
 }
 
-type LobbyPlayerSnapshot struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	PlayerId       string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	AccountId      string                 `protobuf:"bytes,2,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Nickname       string                 `protobuf:"bytes,3,opt,name=nickname,proto3" json:"nickname,omitempty"`
-	Region         string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
-	ProfileVersion uint64                 `protobuf:"varint,5,opt,name=profile_version,json=profileVersion,proto3" json:"profile_version,omitempty"`
-	AssetVersion   uint64                 `protobuf:"varint,6,opt,name=asset_version,json=assetVersion,proto3" json:"asset_version,omitempty"`
-	Currency       map[string]int64       `protobuf:"bytes,7,rep,name=currency,proto3" json:"currency,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *LobbyPlayerSnapshot) Reset() {
-	*x = LobbyPlayerSnapshot{}
-	mi := &file_internal_lobby_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LobbyPlayerSnapshot) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LobbyPlayerSnapshot) ProtoMessage() {}
-
-func (x *LobbyPlayerSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_lobby_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LobbyPlayerSnapshot.ProtoReflect.Descriptor instead.
-func (*LobbyPlayerSnapshot) Descriptor() ([]byte, []int) {
-	return file_internal_lobby_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *LobbyPlayerSnapshot) GetPlayerId() string {
-	if x != nil {
-		return x.PlayerId
-	}
-	return ""
-}
-
-func (x *LobbyPlayerSnapshot) GetAccountId() string {
-	if x != nil {
-		return x.AccountId
-	}
-	return ""
-}
-
-func (x *LobbyPlayerSnapshot) GetNickname() string {
-	if x != nil {
-		return x.Nickname
-	}
-	return ""
-}
-
-func (x *LobbyPlayerSnapshot) GetRegion() string {
-	if x != nil {
-		return x.Region
-	}
-	return ""
-}
-
-func (x *LobbyPlayerSnapshot) GetProfileVersion() uint64 {
-	if x != nil {
-		return x.ProfileVersion
-	}
-	return 0
-}
-
-func (x *LobbyPlayerSnapshot) GetAssetVersion() uint64 {
-	if x != nil {
-		return x.AssetVersion
-	}
-	return 0
-}
-
-func (x *LobbyPlayerSnapshot) GetCurrency() map[string]int64 {
-	if x != nil {
-		return x.Currency
-	}
-	return nil
-}
-
 var File_internal_lobby_proto protoreflect.FileDescriptor
 
 const file_internal_lobby_proto_rawDesc = "" +
@@ -468,19 +376,7 @@ const file_internal_lobby_proto_rawDesc = "" +
 	"asset_type\x18\x03 \x01(\tR\tassetType\x12\x18\n" +
 	"\abalance\x18\x04 \x01(\x03R\abalance\x12#\n" +
 	"\rasset_version\x18\x05 \x01(\x04R\fassetVersion\x12\x1a\n" +
-	"\breplayed\x18\x06 \x01(\bR\breplayed\"\xe0\x02\n" +
-	"\x13LobbyPlayerSnapshot\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1d\n" +
-	"\n" +
-	"account_id\x18\x02 \x01(\tR\taccountId\x12\x1a\n" +
-	"\bnickname\x18\x03 \x01(\tR\bnickname\x12\x16\n" +
-	"\x06region\x18\x04 \x01(\tR\x06region\x12'\n" +
-	"\x0fprofile_version\x18\x05 \x01(\x04R\x0eprofileVersion\x12#\n" +
-	"\rasset_version\x18\x06 \x01(\x04R\fassetVersion\x12N\n" +
-	"\bcurrency\x18\a \x03(\v22.game01.internal.LobbyPlayerSnapshot.CurrencyEntryR\bcurrency\x1a;\n" +
-	"\rCurrencyEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01*\xe2\x01\n" +
+	"\breplayed\x18\x06 \x01(\bR\breplayed*\xe2\x01\n" +
 	"\x0eLobbyMessageId\x12 \n" +
 	"\x1cLOBBY_MESSAGE_ID_UNSPECIFIED\x10\x00\x12+\n" +
 	"&LOBBY_MESSAGE_ID_ENSURE_PLAYER_REQUEST\x10\xb9\x17\x12,\n" +
@@ -501,23 +397,20 @@ func file_internal_lobby_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_lobby_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_lobby_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_internal_lobby_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_internal_lobby_proto_goTypes = []any{
 	(LobbyMessageId)(0),          // 0: game01.internal.LobbyMessageId
 	(*EnsurePlayerRequest)(nil),  // 1: game01.internal.EnsurePlayerRequest
 	(*EnsurePlayerResponse)(nil), // 2: game01.internal.EnsurePlayerResponse
 	(*SettlementRequest)(nil),    // 3: game01.internal.SettlementRequest
 	(*SettlementResponse)(nil),   // 4: game01.internal.SettlementResponse
-	(*LobbyPlayerSnapshot)(nil),  // 5: game01.internal.LobbyPlayerSnapshot
-	nil,                          // 6: game01.internal.LobbyPlayerSnapshot.CurrencyEntry
 }
 var file_internal_lobby_proto_depIdxs = []int32{
-	6, // 0: game01.internal.LobbyPlayerSnapshot.currency:type_name -> game01.internal.LobbyPlayerSnapshot.CurrencyEntry
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_internal_lobby_proto_init() }
@@ -531,7 +424,7 @@ func file_internal_lobby_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_lobby_proto_rawDesc), len(file_internal_lobby_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
