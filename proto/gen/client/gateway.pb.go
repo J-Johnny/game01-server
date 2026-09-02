@@ -149,6 +149,55 @@ func (AuthProvider) EnumDescriptor() ([]byte, []int) {
 	return file_client_gateway_proto_rawDescGZIP(), []int{1}
 }
 
+type RestoreMode int32
+
+const (
+	RestoreMode_RESTORE_MODE_FULL  RestoreMode = 0
+	RestoreMode_RESTORE_MODE_DELTA RestoreMode = 1
+	RestoreMode_RESTORE_MODE_NOOP  RestoreMode = 2
+)
+
+// Enum value maps for RestoreMode.
+var (
+	RestoreMode_name = map[int32]string{
+		0: "RESTORE_MODE_FULL",
+		1: "RESTORE_MODE_DELTA",
+		2: "RESTORE_MODE_NOOP",
+	}
+	RestoreMode_value = map[string]int32{
+		"RESTORE_MODE_FULL":  0,
+		"RESTORE_MODE_DELTA": 1,
+		"RESTORE_MODE_NOOP":  2,
+	}
+)
+
+func (x RestoreMode) Enum() *RestoreMode {
+	p := new(RestoreMode)
+	*p = x
+	return p
+}
+
+func (x RestoreMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RestoreMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_client_gateway_proto_enumTypes[2].Descriptor()
+}
+
+func (RestoreMode) Type() protoreflect.EnumType {
+	return &file_client_gateway_proto_enumTypes[2]
+}
+
+func (x RestoreMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RestoreMode.Descriptor instead.
+func (RestoreMode) EnumDescriptor() ([]byte, []int) {
+	return file_client_gateway_proto_rawDescGZIP(), []int{2}
+}
+
 type Envelope struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MessageId     ClientMessageId        `protobuf:"varint,1,opt,name=message_id,json=messageId,proto3,enum=game01.client.gateway.ClientMessageId" json:"message_id,omitempty"`
@@ -549,6 +598,7 @@ type ResumeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	ResumeToken   string                 `protobuf:"bytes,2,opt,name=resume_token,json=resumeToken,proto3" json:"resume_token,omitempty"`
+	StateVersions map[string]uint64      `protobuf:"bytes,3,rep,name=state_versions,json=stateVersions,proto3" json:"state_versions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -595,6 +645,13 @@ func (x *ResumeRequest) GetResumeToken() string {
 		return x.ResumeToken
 	}
 	return ""
+}
+
+func (x *ResumeRequest) GetStateVersions() map[string]uint64 {
+	if x != nil {
+		return x.StateVersions
+	}
+	return nil
 }
 
 type ResumeResponse struct {
@@ -726,14 +783,16 @@ func (x *ErrorResponse) GetMessage() string {
 }
 
 type StateRestoreEvent struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Service       string                 `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
-	PlayerId      string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	StateVersion  uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
-	Snapshot      []byte                 `protobuf:"bytes,4,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
-	Available     bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Service          string                 `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
+	PlayerId         string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	StateVersion     uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
+	Snapshot         []byte                 `protobuf:"bytes,4,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	Available        bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
+	Mode             RestoreMode            `protobuf:"varint,6,opt,name=mode,proto3,enum=game01.client.gateway.RestoreMode" json:"mode,omitempty"`
+	BaseStateVersion uint64                 `protobuf:"varint,7,opt,name=base_state_version,json=baseStateVersion,proto3" json:"base_state_version,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *StateRestoreEvent) Reset() {
@@ -801,6 +860,20 @@ func (x *StateRestoreEvent) GetAvailable() bool {
 	return false
 }
 
+func (x *StateRestoreEvent) GetMode() RestoreMode {
+	if x != nil {
+		return x.Mode
+	}
+	return RestoreMode_RESTORE_MODE_FULL
+}
+
+func (x *StateRestoreEvent) GetBaseStateVersion() uint64 {
+	if x != nil {
+		return x.BaseStateVersion
+	}
+	return 0
+}
+
 var File_client_gateway_proto protoreflect.FileDescriptor
 
 const file_client_gateway_proto_rawDesc = "" +
@@ -848,11 +921,15 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\x10connection_epoch\x18\x04 \x01(\x04R\x0fconnectionEpoch\x12#\n" +
 	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\x12>\n" +
 	"\x1crefresh_token_expire_at_unix\x18\x06 \x01(\x03R\x18refreshTokenExpireAtUnix\x12\x1b\n" +
-	"\tplayer_id\x18\a \x01(\tR\bplayerId\"Q\n" +
+	"\tplayer_id\x18\a \x01(\tR\bplayerId\"\xf3\x01\n" +
 	"\rResumeRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12!\n" +
-	"\fresume_token\x18\x02 \x01(\tR\vresumeToken\"\xb9\x01\n" +
+	"\fresume_token\x18\x02 \x01(\tR\vresumeToken\x12^\n" +
+	"\x0estate_versions\x18\x03 \x03(\v27.game01.client.gateway.ResumeRequest.StateVersionsEntryR\rstateVersions\x1a@\n" +
+	"\x12StateVersionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x04R\x05value:\x028\x01\"\xb9\x01\n" +
 	"\x0eResumeResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1d\n" +
@@ -863,13 +940,15 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\tplayer_id\x18\x05 \x01(\tR\bplayerId\"=\n" +
 	"\rErrorResponse\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\rR\x04code\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xa9\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x8f\x02\n" +
 	"\x11StateRestoreEvent\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12#\n" +
 	"\rstate_version\x18\x03 \x01(\x04R\fstateVersion\x12\x1a\n" +
 	"\bsnapshot\x18\x04 \x01(\fR\bsnapshot\x12\x1c\n" +
-	"\tavailable\x18\x05 \x01(\bR\tavailable*\xf9\x02\n" +
+	"\tavailable\x18\x05 \x01(\bR\tavailable\x126\n" +
+	"\x04mode\x18\x06 \x01(\x0e2\".game01.client.gateway.RestoreModeR\x04mode\x12,\n" +
+	"\x12base_state_version\x18\a \x01(\x04R\x10baseStateVersion*\xf9\x02\n" +
 	"\x0fClientMessageId\x12!\n" +
 	"\x1dCLIENT_MESSAGE_ID_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fCLIENT_MESSAGE_ID_LOGIN_REQUEST\x10\x01\x12$\n" +
@@ -887,7 +966,11 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\x13AUTH_PROVIDER_APPLE\x10\x03\x12\x18\n" +
 	"\x14AUTH_PROVIDER_GOOGLE\x10\x04\x12\x18\n" +
 	"\x14AUTH_PROVIDER_WECHAT\x10\x05\x12\x1a\n" +
-	"\x16AUTH_PROVIDER_PASSWORD\x10\x06BLZ)server/proto/gen/client/gateway;gatewaypb\xaa\x02\x1eGame01.Protocol.Client.Gatewayb\x06proto3"
+	"\x16AUTH_PROVIDER_PASSWORD\x10\x06*S\n" +
+	"\vRestoreMode\x12\x15\n" +
+	"\x11RESTORE_MODE_FULL\x10\x00\x12\x16\n" +
+	"\x12RESTORE_MODE_DELTA\x10\x01\x12\x15\n" +
+	"\x11RESTORE_MODE_NOOP\x10\x02BLZ)server/proto/gen/client/gateway;gatewaypb\xaa\x02\x1eGame01.Protocol.Client.Gatewayb\x06proto3"
 
 var (
 	file_client_gateway_proto_rawDescOnce sync.Once
@@ -901,29 +984,33 @@ func file_client_gateway_proto_rawDescGZIP() []byte {
 	return file_client_gateway_proto_rawDescData
 }
 
-var file_client_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_client_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_client_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_client_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_client_gateway_proto_goTypes = []any{
 	(ClientMessageId)(0),         // 0: game01.client.gateway.ClientMessageId
 	(AuthProvider)(0),            // 1: game01.client.gateway.AuthProvider
-	(*Envelope)(nil),             // 2: game01.client.gateway.Envelope
-	(*LoginRequest)(nil),         // 3: game01.client.gateway.LoginRequest
-	(*LoginResponse)(nil),        // 4: game01.client.gateway.LoginResponse
-	(*RefreshLoginRequest)(nil),  // 5: game01.client.gateway.RefreshLoginRequest
-	(*RefreshLoginResponse)(nil), // 6: game01.client.gateway.RefreshLoginResponse
-	(*ResumeRequest)(nil),        // 7: game01.client.gateway.ResumeRequest
-	(*ResumeResponse)(nil),       // 8: game01.client.gateway.ResumeResponse
-	(*ErrorResponse)(nil),        // 9: game01.client.gateway.ErrorResponse
-	(*StateRestoreEvent)(nil),    // 10: game01.client.gateway.StateRestoreEvent
+	(RestoreMode)(0),             // 2: game01.client.gateway.RestoreMode
+	(*Envelope)(nil),             // 3: game01.client.gateway.Envelope
+	(*LoginRequest)(nil),         // 4: game01.client.gateway.LoginRequest
+	(*LoginResponse)(nil),        // 5: game01.client.gateway.LoginResponse
+	(*RefreshLoginRequest)(nil),  // 6: game01.client.gateway.RefreshLoginRequest
+	(*RefreshLoginResponse)(nil), // 7: game01.client.gateway.RefreshLoginResponse
+	(*ResumeRequest)(nil),        // 8: game01.client.gateway.ResumeRequest
+	(*ResumeResponse)(nil),       // 9: game01.client.gateway.ResumeResponse
+	(*ErrorResponse)(nil),        // 10: game01.client.gateway.ErrorResponse
+	(*StateRestoreEvent)(nil),    // 11: game01.client.gateway.StateRestoreEvent
+	nil,                          // 12: game01.client.gateway.ResumeRequest.StateVersionsEntry
 }
 var file_client_gateway_proto_depIdxs = []int32{
-	0, // 0: game01.client.gateway.Envelope.message_id:type_name -> game01.client.gateway.ClientMessageId
-	1, // 1: game01.client.gateway.LoginRequest.provider:type_name -> game01.client.gateway.AuthProvider
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0,  // 0: game01.client.gateway.Envelope.message_id:type_name -> game01.client.gateway.ClientMessageId
+	1,  // 1: game01.client.gateway.LoginRequest.provider:type_name -> game01.client.gateway.AuthProvider
+	12, // 2: game01.client.gateway.ResumeRequest.state_versions:type_name -> game01.client.gateway.ResumeRequest.StateVersionsEntry
+	2,  // 3: game01.client.gateway.StateRestoreEvent.mode:type_name -> game01.client.gateway.RestoreMode
+	4,  // [4:4] is the sub-list for method output_type
+	4,  // [4:4] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_client_gateway_proto_init() }
@@ -936,8 +1023,8 @@ func file_client_gateway_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_client_gateway_proto_rawDesc), len(file_client_gateway_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   9,
+			NumEnums:      3,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

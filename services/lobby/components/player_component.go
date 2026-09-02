@@ -177,9 +177,37 @@ func (c *PlayerComponent) restore(ctx context.Context, _ streaming.Peer, envelop
 	} else if err != nil {
 		return nil, err
 	}
-	payload, err := proto.Marshal(&internalpb.LobbyPlayerSnapshot{PlayerId: snapshot.Player.ID, AccountId: snapshot.Player.AccountID, Nickname: snapshot.Player.Nickname, Region: snapshot.Player.Region, ProfileVersion: snapshot.Player.ProfileVersion, AssetVersion: snapshot.Assets.AssetVersion, Currency: snapshot.Assets.Currency})
+	stateVersion := snapshot.StateVersion()
+	mode := internalpb.RestoreMode_RESTORE_MODE_FULL
+	baseStateVersion := uint64(0)
+	var payload []byte
+	if request.LastStateVersion == stateVersion {
+		mode = internalpb.RestoreMode_RESTORE_MODE_NOOP
+		baseStateVersion = request.LastStateVersion
+	} else {
+		payload, err = proto.Marshal(&internalpb.LobbyPlayerSnapshot{
+			PlayerId:       snapshot.Player.ID,
+			AccountId:      snapshot.Player.AccountID,
+			Nickname:       snapshot.Player.Nickname,
+			Region:         snapshot.Player.Region,
+			ProfileVersion: snapshot.Player.ProfileVersion,
+			AssetVersion:   snapshot.Assets.AssetVersion,
+			Currency:       snapshot.Assets.Currency,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
-	return &streaming.MessageResult{MessageID: uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE), Message: &internalpb.RestorePlayerStateResponse{ServiceType: internalpb.ServiceType_SERVICE_TYPE_LOBBY, PlayerId: request.PlayerId, StateVersion: snapshot.StateVersion(), Snapshot: payload, Available: true}}, nil
+	return &streaming.MessageResult{
+		MessageID: uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE),
+		Message: &internalpb.RestorePlayerStateResponse{
+			ServiceType:      internalpb.ServiceType_SERVICE_TYPE_LOBBY,
+			PlayerId:         request.PlayerId,
+			StateVersion:     stateVersion,
+			Snapshot:         payload,
+			Available:        true,
+			Mode:             mode,
+			BaseStateVersion: baseStateVersion,
+		},
+	}, nil
 }

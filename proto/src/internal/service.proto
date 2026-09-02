@@ -25,6 +25,14 @@ message ServiceStatusResponse {
 message RestorePlayerStateRequest {
   string player_id = 1;
   string session_id = 2;
+  uint64 last_state_version = 3;
+  bool allow_incremental = 4;
+}
+
+enum RestoreMode {
+  RESTORE_MODE_FULL = 0;
+  RESTORE_MODE_DELTA = 1;
+  RESTORE_MODE_NOOP = 2;
 }
 
 message RestorePlayerStateResponse {
@@ -33,4 +41,6 @@ message RestorePlayerStateResponse {
   uint64 state_version = 3;
   bytes snapshot = 4;
   bool available = 5;
+  RestoreMode mode = 6;
+  uint64 base_state_version = 7;
 }

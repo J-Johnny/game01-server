@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/protobuf/proto"
 	"server/common/streaming"
 	internalpb "server/proto/gen/internalpb"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type PlayerResolver interface {
@@ -34,7 +35,10 @@ func (r *LobbyPlayerResolver) EnsurePlayer(ctx context.Context, accountID string
 	if err != nil {
 		return "", err
 	}
-	response, err := client.Request(ctx, &internalpb.InternalEnvelope{TargetService: internalpb.ServiceType_SERVICE_TYPE_LOBBY, MessageId: uint32(internalpb.LobbyMessageId_LOBBY_MESSAGE_ID_ENSURE_PLAYER_REQUEST), Payload: payload})
+	response, err := client.Request(ctx, &internalpb.InternalEnvelope{
+		TargetService: internalpb.ServiceType_SERVICE_TYPE_LOBBY,
+		MessageId:     uint32(internalpb.LobbyMessageId_LOBBY_MESSAGE_ID_ENSURE_PLAYER_REQUEST),
+		Payload:       payload})
 	if err != nil {
 		return "", fmt.Errorf("ensure lobby player: %w", err)
 	}

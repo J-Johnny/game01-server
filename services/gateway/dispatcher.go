@@ -60,11 +60,11 @@ type Dispatcher struct {
 	authenticator Authenticator
 	sessions      *session.Manager
 	now           func() time.Time
-	restore       func(context.Context, *Connection, string, string)
+	restore       func(context.Context, *Connection, string, string, map[string]uint64)
 	players       PlayerResolver
 }
 
-func (d *Dispatcher) SetRestoreHandler(handler func(context.Context, *Connection, string, string)) {
+func (d *Dispatcher) SetRestoreHandler(handler func(context.Context, *Connection, string, string, map[string]uint64)) {
 	d.restore = handler
 }
 
@@ -139,6 +139,9 @@ func (d *Dispatcher) login(ctx context.Context, connection *Connection, envelope
 		return err
 	}
 	connection.BindSession(created.Record.SessionID, created.Record.ConnectionEpoch)
+	if d.restore != nil {
+		go d.restore(ctx, connection, created.Record.PlayerID, created.Record.SessionID, nil)
+	}
 	return d.send(connection, MessageLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.LoginResponse{AccountId: created.Record.AccountID, PlayerId: created.Record.PlayerID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
 }
 
@@ -163,6 +166,9 @@ func (d *Dispatcher) refreshLogin(ctx context.Context, connection *Connection, e
 		return err
 	}
 	connection.BindSession(created.Record.SessionID, created.Record.ConnectionEpoch)
+	if d.restore != nil {
+		go d.restore(ctx, connection, created.Record.PlayerID, created.Record.SessionID, nil)
+	}
 	return d.send(connection, MessageRefreshLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.RefreshLoginResponse{AccountId: created.Record.AccountID, PlayerId: created.Record.PlayerID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
 }
 
@@ -188,7 +194,7 @@ func (d *Dispatcher) resume(ctx context.Context, connection *Connection, envelop
 	}
 	connection.BindSession(created.Record.SessionID, created.Record.ConnectionEpoch)
 	if d.restore != nil {
-		go d.restore(ctx, connection, created.Record.PlayerID, created.Record.SessionID)
+		go d.restore(ctx, connection, created.Record.PlayerID, created.Record.SessionID, request.StateVersions)
 	}
 	return d.send(connection, MessageResumeResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.ResumeResponse{AccountId: created.Record.AccountID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, PlayerId: created.Record.PlayerID})
 }

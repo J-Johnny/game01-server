@@ -68,7 +68,7 @@ func NewModule(deps app.Dependencies) *Module {
 	return module
 }
 
-func (m *Module) restoreState(ctx context.Context, connection *Connection, playerID, sessionID string) {
+func (m *Module) restoreState(ctx context.Context, connection *Connection, playerID, sessionID string, stateVersions map[string]uint64) {
 	if playerID == "" || connection == nil {
 		return
 	}
@@ -80,7 +80,12 @@ func (m *Module) restoreState(ctx context.Context, connection *Connection, playe
 		if !ok {
 			continue
 		}
-		payload, err := proto.Marshal(&internalpb.RestorePlayerStateRequest{PlayerId: playerID, SessionId: sessionID})
+		payload, err := proto.Marshal(&internalpb.RestorePlayerStateRequest{
+			PlayerId:         playerID,
+			SessionId:        sessionID,
+			LastStateVersion: stateVersions[target.name],
+			AllowIncremental: target.name == "battle",
+		})
 		if err != nil {
 			continue
 		}
@@ -92,7 +97,15 @@ func (m *Module) restoreState(ctx context.Context, connection *Connection, playe
 		if proto.Unmarshal(response.Payload, state) != nil {
 			continue
 		}
-		event, err := proto.Marshal(&gatewaypb.StateRestoreEvent{Service: target.name, PlayerId: state.PlayerId, StateVersion: state.StateVersion, Snapshot: state.Snapshot, Available: state.Available})
+		event, err := proto.Marshal(&gatewaypb.StateRestoreEvent{
+			Service:          target.name,
+			PlayerId:         state.PlayerId,
+			StateVersion:     state.StateVersion,
+			Snapshot:         state.Snapshot,
+			Available:        state.Available,
+			Mode:             gatewaypb.RestoreMode(state.Mode),
+			BaseStateVersion: state.BaseStateVersion,
+		})
 		if err == nil {
 			_ = connection.Send(marshalGatewayEvent(gatewaypb.ClientMessageId_CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT, sessionID, event))
 		}

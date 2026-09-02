@@ -76,6 +76,55 @@ func (InternalMessageId) EnumDescriptor() ([]byte, []int) {
 	return file_internal_service_proto_rawDescGZIP(), []int{0}
 }
 
+type RestoreMode int32
+
+const (
+	RestoreMode_RESTORE_MODE_FULL  RestoreMode = 0
+	RestoreMode_RESTORE_MODE_DELTA RestoreMode = 1
+	RestoreMode_RESTORE_MODE_NOOP  RestoreMode = 2
+)
+
+// Enum value maps for RestoreMode.
+var (
+	RestoreMode_name = map[int32]string{
+		0: "RESTORE_MODE_FULL",
+		1: "RESTORE_MODE_DELTA",
+		2: "RESTORE_MODE_NOOP",
+	}
+	RestoreMode_value = map[string]int32{
+		"RESTORE_MODE_FULL":  0,
+		"RESTORE_MODE_DELTA": 1,
+		"RESTORE_MODE_NOOP":  2,
+	}
+)
+
+func (x RestoreMode) Enum() *RestoreMode {
+	p := new(RestoreMode)
+	*p = x
+	return p
+}
+
+func (x RestoreMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RestoreMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_internal_service_proto_enumTypes[1].Descriptor()
+}
+
+func (RestoreMode) Type() protoreflect.EnumType {
+	return &file_internal_service_proto_enumTypes[1]
+}
+
+func (x RestoreMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RestoreMode.Descriptor instead.
+func (RestoreMode) EnumDescriptor() ([]byte, []int) {
+	return file_internal_service_proto_rawDescGZIP(), []int{1}
+}
+
 type ServiceStatusRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -173,11 +222,13 @@ func (x *ServiceStatusResponse) GetAvailable() bool {
 }
 
 type RestorePlayerStateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId         string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SessionId        string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	LastStateVersion uint64                 `protobuf:"varint,3,opt,name=last_state_version,json=lastStateVersion,proto3" json:"last_state_version,omitempty"`
+	AllowIncremental bool                   `protobuf:"varint,4,opt,name=allow_incremental,json=allowIncremental,proto3" json:"allow_incremental,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *RestorePlayerStateRequest) Reset() {
@@ -224,15 +275,31 @@ func (x *RestorePlayerStateRequest) GetSessionId() string {
 	return ""
 }
 
+func (x *RestorePlayerStateRequest) GetLastStateVersion() uint64 {
+	if x != nil {
+		return x.LastStateVersion
+	}
+	return 0
+}
+
+func (x *RestorePlayerStateRequest) GetAllowIncremental() bool {
+	if x != nil {
+		return x.AllowIncremental
+	}
+	return false
+}
+
 type RestorePlayerStateResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceType   ServiceType            `protobuf:"varint,1,opt,name=service_type,json=serviceType,proto3,enum=game01.internal.ServiceType" json:"service_type,omitempty"`
-	PlayerId      string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
-	StateVersion  uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
-	Snapshot      []byte                 `protobuf:"bytes,4,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
-	Available     bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ServiceType      ServiceType            `protobuf:"varint,1,opt,name=service_type,json=serviceType,proto3,enum=game01.internal.ServiceType" json:"service_type,omitempty"`
+	PlayerId         string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	StateVersion     uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
+	Snapshot         []byte                 `protobuf:"bytes,4,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	Available        bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
+	Mode             RestoreMode            `protobuf:"varint,6,opt,name=mode,proto3,enum=game01.internal.RestoreMode" json:"mode,omitempty"`
+	BaseStateVersion uint64                 `protobuf:"varint,7,opt,name=base_state_version,json=baseStateVersion,proto3" json:"base_state_version,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *RestorePlayerStateResponse) Reset() {
@@ -300,6 +367,20 @@ func (x *RestorePlayerStateResponse) GetAvailable() bool {
 	return false
 }
 
+func (x *RestorePlayerStateResponse) GetMode() RestoreMode {
+	if x != nil {
+		return x.Mode
+	}
+	return RestoreMode_RESTORE_MODE_FULL
+}
+
+func (x *RestorePlayerStateResponse) GetBaseStateVersion() uint64 {
+	if x != nil {
+		return x.BaseStateVersion
+	}
+	return 0
+}
+
 var File_internal_service_proto protoreflect.FileDescriptor
 
 const file_internal_service_proto_rawDesc = "" +
@@ -310,23 +391,31 @@ const file_internal_service_proto_rawDesc = "" +
 	"\fservice_type\x18\x01 \x01(\x0e2\x1c.game01.internal.ServiceTypeR\vserviceType\x12\x1f\n" +
 	"\vinstance_id\x18\x02 \x01(\tR\n" +
 	"instanceId\x12\x1c\n" +
-	"\tavailable\x18\x03 \x01(\bR\tavailable\"W\n" +
+	"\tavailable\x18\x03 \x01(\bR\tavailable\"\xb2\x01\n" +
 	"\x19RestorePlayerStateRequest\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x02 \x01(\tR\tsessionId\"\xd9\x01\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\x12,\n" +
+	"\x12last_state_version\x18\x03 \x01(\x04R\x10lastStateVersion\x12+\n" +
+	"\x11allow_incremental\x18\x04 \x01(\bR\x10allowIncremental\"\xb9\x02\n" +
 	"\x1aRestorePlayerStateResponse\x12?\n" +
 	"\fservice_type\x18\x01 \x01(\x0e2\x1c.game01.internal.ServiceTypeR\vserviceType\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12#\n" +
 	"\rstate_version\x18\x03 \x01(\x04R\fstateVersion\x12\x1a\n" +
 	"\bsnapshot\x18\x04 \x01(\fR\bsnapshot\x12\x1c\n" +
-	"\tavailable\x18\x05 \x01(\bR\tavailable*\x88\x02\n" +
+	"\tavailable\x18\x05 \x01(\bR\tavailable\x120\n" +
+	"\x04mode\x18\x06 \x01(\x0e2\x1c.game01.internal.RestoreModeR\x04mode\x12,\n" +
+	"\x12base_state_version\x18\a \x01(\x04R\x10baseStateVersion*\x88\x02\n" +
 	"\x11InternalMessageId\x12#\n" +
 	"\x1fINTERNAL_MESSAGE_ID_UNSPECIFIED\x10\x00\x12.\n" +
 	"*INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST\x10\x01\x12/\n" +
 	"+INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE\x10e\x125\n" +
 	"0INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST\x10\xd1\x0f\x126\n" +
-	"1INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE\x10\xb5\x10B(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
+	"1INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE\x10\xb5\x10*S\n" +
+	"\vRestoreMode\x12\x15\n" +
+	"\x11RESTORE_MODE_FULL\x10\x00\x12\x16\n" +
+	"\x12RESTORE_MODE_DELTA\x10\x01\x12\x15\n" +
+	"\x11RESTORE_MODE_NOOP\x10\x02B(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
 
 var (
 	file_internal_service_proto_rawDescOnce sync.Once
@@ -340,24 +429,26 @@ func file_internal_service_proto_rawDescGZIP() []byte {
 	return file_internal_service_proto_rawDescData
 }
 
-var file_internal_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_internal_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_internal_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_internal_service_proto_goTypes = []any{
 	(InternalMessageId)(0),             // 0: game01.internal.InternalMessageId
-	(*ServiceStatusRequest)(nil),       // 1: game01.internal.ServiceStatusRequest
-	(*ServiceStatusResponse)(nil),      // 2: game01.internal.ServiceStatusResponse
-	(*RestorePlayerStateRequest)(nil),  // 3: game01.internal.RestorePlayerStateRequest
-	(*RestorePlayerStateResponse)(nil), // 4: game01.internal.RestorePlayerStateResponse
-	(ServiceType)(0),                   // 5: game01.internal.ServiceType
+	(RestoreMode)(0),                   // 1: game01.internal.RestoreMode
+	(*ServiceStatusRequest)(nil),       // 2: game01.internal.ServiceStatusRequest
+	(*ServiceStatusResponse)(nil),      // 3: game01.internal.ServiceStatusResponse
+	(*RestorePlayerStateRequest)(nil),  // 4: game01.internal.RestorePlayerStateRequest
+	(*RestorePlayerStateResponse)(nil), // 5: game01.internal.RestorePlayerStateResponse
+	(ServiceType)(0),                   // 6: game01.internal.ServiceType
 }
 var file_internal_service_proto_depIdxs = []int32{
-	5, // 0: game01.internal.ServiceStatusResponse.service_type:type_name -> game01.internal.ServiceType
-	5, // 1: game01.internal.RestorePlayerStateResponse.service_type:type_name -> game01.internal.ServiceType
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	6, // 0: game01.internal.ServiceStatusResponse.service_type:type_name -> game01.internal.ServiceType
+	6, // 1: game01.internal.RestorePlayerStateResponse.service_type:type_name -> game01.internal.ServiceType
+	1, // 2: game01.internal.RestorePlayerStateResponse.mode:type_name -> game01.internal.RestoreMode
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_internal_service_proto_init() }
@@ -371,7 +462,7 @@ func file_internal_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_service_proto_rawDesc), len(file_internal_service_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
