@@ -23,8 +23,10 @@ func TestRetryPolicyRetriesTransientFailures(t *testing.T) {
 
 func TestTokenBucketLimitsBurst(t *testing.T) {
 	bucket := NewTokenBucket(2, 1)
-	if !bucket.Allow() || !bucket.Allow() || bucket.Allow() {
-		t.Fatal("token bucket did not enforce burst capacity")
+	for i := 0; i <= 2; i++ {
+		if (i <= 1 && !bucket.Allow()) || (i > 1 && bucket.Allow()) {
+			t.Fatal("token bucket did not allow burst")
+		}
 	}
 }
 
