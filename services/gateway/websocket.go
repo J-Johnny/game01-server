@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"server/services/gateway/session"
 )
 
 const (
@@ -37,6 +38,7 @@ type Connection struct {
 	closeOnce sync.Once
 	mu        sync.RWMutex
 	closed    bool
+	sessionID string
 }
 
 func (c *Connection) Send(payload []byte) error {
@@ -63,14 +65,27 @@ func (c *Connection) Close() {
 	})
 }
 
-type Handler struct {
-	upgrader    websocket.Upgrader
-	dispatch    MessageDispatcher
-	connections sync.Map
+func (c *Connection) BindSession(sessionID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.sessionID = sessionID
 }
 
-func NewHandler(dispatch MessageDispatcher) *Handler {
-	return &Handler{
+func (c *Connection) SessionID() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.sessionID
+}
+
+type Handler struct {
+	upgrader       websocket.Upgrader
+	dispatch       MessageDispatcher
+	sessionManager *session.Manager
+	connections    sync.Map
+}
+
+func NewHandler(dispatch MessageDispatcher, sessionManagers ...*session.Manager) *Handler {
+	handler := &Handler{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  4096,
 			WriteBufferSize: 4096,
@@ -78,6 +93,10 @@ func NewHandler(dispatch MessageDispatcher) *Handler {
 		},
 		dispatch: dispatch,
 	}
+	if len(sessionManagers) > 0 {
+		handler.sessionManager = sessionManagers[0]
+	}
+	return handler
 }
 
 func (h *Handler) RegisterRoutes(r gin.IRouter) {
@@ -103,12 +122,28 @@ func (h *Handler) Handle(c *gin.Context) {
 	}
 	conn.ID = connectionID
 	h.connections.Store(connectionID, conn)
+	defer h.disconnectSession(conn)
 	defer h.connections.Delete(connectionID)
 	slog.Info("websocket connected", "protocol", "websocket", "request_id", requestID(c), "connection_id", connectionID, "client_ip", c.ClientIP())
 	defer slog.Info("websocket disconnected", "protocol", "websocket", "request_id", requestID(c), "connection_id", connectionID)
 	go h.writePump(conn)
 	h.readPump(c, conn)
 	conn.Close()
+}
+
+func (h *Handler) disconnectSession(conn *Connection) {
+	if h.sessionManager == nil || conn == nil {
+		return
+	}
+	sessionID := conn.SessionID()
+	if sessionID == "" {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := h.sessionManager.DisconnectConnection(ctx, sessionID, conn.ID, time.Now()); err != nil {
+		slog.Warn("disconnect websocket session failed", "protocol", "websocket", "connection_id", conn.ID, "session_id", sessionID, "error", err)
+	}
 }
 
 func newConnectionID() (string, error) {

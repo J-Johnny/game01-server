@@ -136,9 +136,20 @@ func (m *Manager) Create(ctx context.Context, accountID string, connectionID str
 }
 
 func (m *Manager) Disconnect(ctx context.Context, sessionID string, now time.Time) error {
+	return m.disconnect(ctx, sessionID, "", now)
+}
+
+func (m *Manager) DisconnectConnection(ctx context.Context, sessionID, connectionID string, now time.Time) error {
+	return m.disconnect(ctx, sessionID, connectionID, now)
+}
+
+func (m *Manager) disconnect(ctx context.Context, sessionID, connectionID string, now time.Time) error {
 	r, err := m.store.Get(ctx, sessionID)
 	if err != nil {
 		return err
+	}
+	if connectionID != "" && r.ConnectionID != connectionID {
+		return nil
 	}
 	r.State = StateReconnecting
 	r.ConnectionID = ""

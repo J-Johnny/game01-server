@@ -123,6 +123,7 @@ func (d *Dispatcher) login(ctx context.Context, connection *Connection, envelope
 	if err != nil {
 		return err
 	}
+	connection.BindSession(created.Record.SessionID)
 	return d.send(connection, MessageLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.LoginResponse{AccountId: created.Record.AccountID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
 }
 
@@ -142,6 +143,7 @@ func (d *Dispatcher) refreshLogin(ctx context.Context, connection *Connection, e
 	if err != nil {
 		return err
 	}
+	connection.BindSession(created.Record.SessionID)
 	return d.send(connection, MessageRefreshLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.RefreshLoginResponse{AccountId: created.Record.AccountID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
 }
 
@@ -158,6 +160,7 @@ func (d *Dispatcher) resume(ctx context.Context, connection *Connection, envelop
 	if err != nil {
 		return d.sendError(connection, envelope.RequestId, ErrorResume, "session resume failed")
 	}
+	connection.BindSession(created.Record.SessionID)
 	return d.send(connection, MessageResumeResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.ResumeResponse{AccountId: created.Record.AccountID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, PlayerId: created.Record.PlayerID})
 }
 

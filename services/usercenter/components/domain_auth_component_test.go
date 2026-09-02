@@ -169,7 +169,7 @@ func TestDomainAuthComponentRenewsLongIdempotencyLease(t *testing.T) {
 	now := time.Now().UTC()
 	pending := &domain.IdempotencyRecord{Key: "lease-key", Operation: "test", RequestHash: "hash", State: domain.IdempotencyStatePending, ReservationID: "reservation", LeaseUntil: now.Add(20 * time.Millisecond), CreatedAt: now, ExpiresAt: now.Add(time.Hour)}
 	idempotency.values[pending.Key] = pending
-	result, err := component.executeReserved(context.Background(), pending.Key, pending.ReservationID, pending.Operation, pending.RequestHash, func(ctx context.Context) (*streaming.MessageResult, error) {
+	result, err := component.executeReserved(context.Background(), pending.Key, pending.ReservationID, func(ctx context.Context) (*streaming.MessageResult, error) {
 		select {
 		case <-time.After(35 * time.Millisecond):
 			return &streaming.MessageResult{MessageID: 1, Message: &internalpb.GuestAuthenticateResponse{AccountId: "account"}}, nil

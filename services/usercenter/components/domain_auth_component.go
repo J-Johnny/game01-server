@@ -315,7 +315,7 @@ func (c *DomainAuthComponent) withIdempotency(ctx context.Context, key, operatio
 			}
 			return c.waitForIdempotency(ctx, key, operation, requestHash, response, pending.LeaseUntil, execute)
 		}
-		return c.executeReserved(ctx, key, reservationID, operation, requestHash, execute)
+		return c.executeReserved(ctx, key, reservationID, execute)
 	}
 	result, err := execute(ctx)
 	if err != nil || result == nil || result.Message == nil {
@@ -342,7 +342,7 @@ func (c *DomainAuthComponent) withIdempotency(ctx context.Context, key, operatio
 	return result, nil
 }
 
-func (c *DomainAuthComponent) executeReserved(ctx context.Context, key, reservationID, operation, requestHash string, execute func(context.Context) (*streaming.MessageResult, error)) (*streaming.MessageResult, error) {
+func (c *DomainAuthComponent) executeReserved(ctx context.Context, key, reservationID string, execute func(context.Context) (*streaming.MessageResult, error)) (*streaming.MessageResult, error) {
 	executionContext, cancel := context.WithCancel(ctx)
 	renewErr := make(chan error, 1)
 	renewDone := make(chan struct{})
@@ -425,7 +425,7 @@ func (c *DomainAuthComponent) waitForIdempotency(ctx context.Context, key, opera
 				return nil, reserveErr
 			}
 			if owns {
-				return c.executeReserved(ctx, key, reservationID, operation, requestHash, execute)
+				return c.executeReserved(ctx, key, reservationID, execute)
 			}
 			if claimed != nil && claimed.IsCompleted() {
 				return replayIdempotency(claimed, operation, requestHash, response)

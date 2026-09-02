@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 	gatewaypb "server/proto/gen/client"
+	"server/services/gateway/session"
 )
 
 func TestWebSocketBinaryProtocolValidation(t *testing.T) {
@@ -90,6 +92,48 @@ func TestWebSocketRejectsTextFrames(t *testing.T) {
 	if _, _, err := ws.ReadMessage(); err == nil {
 		t.Fatal("text frame unexpectedly received a response")
 	}
+}
+
+func TestWebSocketDisconnectMarksBoundSessionReconnecting(t *testing.T) {
+	store := session.NewMemoryStore()
+	manager := session.NewManager(store, "gateway-test", time.Hour, time.Minute)
+	var sessionID string
+
+	dispatch := DispatcherFunc(func(_ context.Context, connection *Connection, _ []byte) error {
+		created, createErr := manager.Create(context.Background(), "account-test", connection.ID, time.Now().UTC())
+		if createErr != nil {
+			return createErr
+		}
+		sessionID = created.Record.SessionID
+		connection.BindSession(sessionID)
+		return nil
+	})
+	router := gin.New()
+	NewHandler(dispatch, manager).RegisterRoutes(router)
+	server := httptest.NewServer(router)
+	defer server.Close()
+	ws := dialWebSocketTestServer(t, server)
+
+	if err := ws.WriteMessage(websocket.BinaryMessage, []byte{1}); err != nil {
+		t.Fatalf("write message: %v", err)
+	}
+	if err := ws.Close(); err != nil {
+		t.Fatalf("close websocket: %v", err)
+	}
+
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		record, getErr := store.Get(context.Background(), sessionID)
+		if getErr == nil && record.State == session.StateReconnecting && record.ConnectionID == "" {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	record, err := store.Get(context.Background(), sessionID)
+	if err != nil {
+		t.Fatalf("get disconnected session: %v", err)
+	}
+	t.Fatalf("session was not marked reconnecting: %+v", record)
 }
 
 func newWebSocketProtocolTestServer(t *testing.T) *httptest.Server {

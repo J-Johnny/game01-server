@@ -27,7 +27,7 @@ func NewModule(deps app.Dependencies) *Module {
 	dispatcher := NewDispatcher(authenticator, manager)
 	return &Module{
 		Module:  base,
-		handler: NewHandler(dispatcher),
+		handler: NewHandler(dispatcher, manager),
 	}
 }
 
