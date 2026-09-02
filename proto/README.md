@@ -17,6 +17,8 @@ Go 输出位于 `proto/gen/`，其中内部协议包为 `proto/gen/internalpb/`�
 
 客户端协议位于 `src/client/`，生成 Go 和 Unity C# 代码。服务间协议位于 `src/internal/`，生成 Go Protobuf 与 gRPC 代码；内部协议不输出到客户端。
 
+客户端状态恢复协议位于 `src/client/state/`，Gateway 会将内部 `LobbyPlayerSnapshot`、`BattleRoomSnapshot` 和 `BattleRoomDelta` 转换为公开状态消息后放入 `StateRestoreEvent.snapshot`。Unity 客户端只依赖 `Game01.Protocol.Client.State`，不直接引用内部服务协议。
+
 ## Protocol Rules
 
 - `.proto` 源文件是协议唯一事实来源；`gen/` 和 Unity `Generated/` 目录只存放生成文件。

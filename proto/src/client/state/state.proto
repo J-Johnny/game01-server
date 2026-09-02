@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package game01.client.state;
+
+option go_package = "server/proto/gen/client/state;statepb";
+option csharp_namespace = "Game01.Protocol.Client.State";
+
+message LobbyStateSnapshot {
+  string player_id = 1;
+  string account_id = 2;
+  string nickname = 3;
+  string region = 4;
+  uint64 profile_version = 5;
+  uint64 asset_version = 6;
+  map<string, int64> currency = 7;
+}
+
+message BattlePlayerState {
+  string player_id = 1;
+  int32 hp = 2;
+  float position_x = 3;
+  float position_y = 4;
+}
+
+message BattleRoomSnapshot {
+  uint64 room_id = 1;
+  uint64 tick = 2;
+  uint64 state_version = 3;
+  string status = 4;
+  repeated BattlePlayerState players = 5;
+  int64 updated_at_unix_milli = 6;
+}
+
+message BattleRoomDelta {
+  uint64 room_id = 1;
+  uint64 from_state_version = 2;
+  uint64 to_state_version = 3;
+  uint64 tick = 4;
+  string status = 5;
+  repeated BattlePlayerState upsert_players = 6;
+  repeated string removed_player_ids = 7;
+}
