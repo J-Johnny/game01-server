@@ -86,12 +86,7 @@ func main() {
 	r.GET("/healthz", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
-	mods := []app.Module{
-		usercenter.NewModule(deps),
-		lobby.NewModule(deps),
-		battle.NewModule(deps),
-		gateway.NewModule(deps),
-	}
+	mods := enabledModules(deps)
 
 	grpcListener, e := net.Listen("tcp", cfg.GRPC.ListenAddress)
 	if e != nil {
@@ -158,6 +153,23 @@ func main() {
 
 type internalModule interface {
 	RegisterInternal(*streaming.Router)
+}
+
+func enabledModules(deps app.Dependencies) []app.Module {
+	modules := make([]app.Module, 0, 4)
+	if deps.Config.Services["usercenter"].Enabled {
+		modules = append(modules, usercenter.NewModule(deps))
+	}
+	if deps.Config.Services["lobby"].Enabled {
+		modules = append(modules, lobby.NewModule(deps))
+	}
+	if deps.Config.Services["battle"].Enabled {
+		modules = append(modules, battle.NewModule(deps))
+	}
+	if deps.Config.Services["gateway"].Enabled {
+		modules = append(modules, gateway.NewModule(deps))
+	}
+	return modules
 }
 
 func registerModules(ctx context.Context, registry discovery.Registry, cfg config.Config, modules []app.Module) ([]discovery.CloseFunc, error) {

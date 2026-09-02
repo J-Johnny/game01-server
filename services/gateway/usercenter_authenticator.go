@@ -13,6 +13,8 @@ import (
 	internalpb "server/proto/gen/internalpb"
 )
 
+var ErrUserCenterUnavailable = errors.New("user center service is unavailable")
+
 type UserCenterAuthenticator struct {
 	client  func() (*streaming.Client, bool)
 	retry   reliability.RetryPolicy
@@ -108,12 +110,12 @@ func (a *UserCenterAuthenticator) request(ctx context.Context, messageID uint32,
 	if a == nil || a.client == nil {
 		return nil, errors.New("user center client is not configured")
 	}
-	client, ok := a.client()
-	if !ok || client == nil {
-		return nil, errors.New("user center service is unavailable")
-	}
 	var response *internalpb.InternalEnvelope
 	request := func(requestContext context.Context) error {
+		client, ok := a.client()
+		if !ok || client == nil {
+			return ErrUserCenterUnavailable
+		}
 		var requestErr error
 		response, requestErr = client.Request(requestContext, &internalpb.InternalEnvelope{TargetService: internalpb.ServiceType_SERVICE_TYPE_USERCENTER, MessageId: messageID, Payload: payload})
 		if requestErr != nil {
@@ -125,7 +127,7 @@ func (a *UserCenterAuthenticator) request(ctx context.Context, messageID uint32,
 	var err error
 	if a.breaker != nil {
 		err = a.breaker.ExecuteClassified(operation, func(candidate error) bool {
-			return errors.Is(candidate, streaming.ErrConnectionClosed) || errors.Is(candidate, streaming.ErrRequestTimeout)
+			return errors.Is(candidate, ErrUserCenterUnavailable) || errors.Is(candidate, streaming.ErrConnectionClosed) || errors.Is(candidate, streaming.ErrRequestTimeout)
 		})
 	} else {
 		err = operation()

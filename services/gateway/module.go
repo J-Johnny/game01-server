@@ -46,7 +46,7 @@ func NewModule(deps app.Dependencies) *Module {
 		MaxDelay:     500 * time.Millisecond,
 		Observer:     deps.Metrics.RetryObserver("gateway", "usercenter", "authenticate", classifyUserCenterError),
 		ShouldRetry: func(err error) bool {
-			return errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout)
+			return errors.Is(err, ErrUserCenterUnavailable) || errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout)
 		},
 	}, reliability.NewCircuitBreaker(deps.Config.Gateway.CircuitFailures, deps.Config.Gateway.CircuitReset, deps.Metrics.CircuitObserver("gateway", "usercenter", "authenticate")))
 	players := NewLobbyPlayerResolver(func() (*streaming.Client, bool) {
@@ -72,6 +72,9 @@ func NewModule(deps app.Dependencies) *Module {
 }
 
 func classifyUserCenterError(err error) string {
+	if errors.Is(err, ErrUserCenterUnavailable) {
+		return "service_unavailable"
+	}
 	if errors.Is(err, streaming.ErrConnectionClosed) {
 		return "connection_closed"
 	}

@@ -168,6 +168,13 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 
 本地观测组件为 Prometheus、Alertmanager、Grafana、Loki 和 Grafana Alloy：Alloy 读取 Docker 容器日志并发送到 Loki，Prometheus 抓取各角色的 `/metrics`，Alertmanager 处理可靠性告警，Grafana 自动配置 Loki/Prometheus 数据源及 `Game01 Logs`、`Game01 Reliability` 面板。重试、限流和熔断指标只使用低基数标签（服务、目标服务、操作、结果和有限错误原因）；`request_id`、账号和会话字段保留在 JSON 内容中用于查询。Prometheus 在本地映射到 `9091`，Alertmanager 映射到 `9093`，生产环境应替换为外部监控和通知配置。
 
+执行本地 Gateway 到 UserCenter 的故障注入测试会临时强制终止并恢复 `usercenter` 容器，验证登录失败、重试指标增长、熔断打开及恢复后的半开探测。测试默认跳过，必须显式开启：
+
+```powershell
+$env:GAME_E2E_FAULT_INJECTION = "1"
+go test ./integration -run TestGatewayUserCenterFaultInjection -count=1 -v
+```
+
 幂等请求在执行期间会自动续租；UserCenter 启动时会清理已过期的 pending 记录，使业务事务已提交但进程在幂等 Complete 前崩溃的请求可以在下一次重试时重新执行并完成幂等记录。
 
 ## Internal gRPC
