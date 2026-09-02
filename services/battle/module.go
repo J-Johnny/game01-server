@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/proto"
@@ -83,24 +82,22 @@ func (m *Module) restorePlayerState(ctx context.Context, _ streaming.Peer, envel
 		Available:        true,
 		Mode:             restoreModeProto(result.Mode),
 		BaseStateVersion: result.BaseStateVersion,
+		PayloadType:      battleStatePayloadType(result.Mode),
+		SchemaVersion:    components.StateSchemaVersion,
 	}
-	var payload proto.Message
+	var payload []byte
 	switch result.Mode {
 	case components.RestoreModeDelta:
-		payload = roomDeltaProto(result.Delta)
+		payload, err = components.MarshalRoomDelta(result.Delta)
 	case components.RestoreModeNoop:
 		payload = nil
 	default:
-		payload = roomSnapshotProto(result.Room)
-	}
-	var payloadBytes []byte
-	if payload != nil {
-		payloadBytes, err = proto.Marshal(payload)
+		payload, err = components.MarshalRoomSnapshot(result.Room)
 	}
 	if err != nil {
 		return nil, err
 	}
-	response.Snapshot = payloadBytes
+	response.Snapshot = payload
 	return &streaming.MessageResult{MessageID: uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE), Message: response}, nil
 }
 
@@ -115,52 +112,15 @@ func restoreModeProto(mode components.RestoreMode) internalpb.RestoreMode {
 	}
 }
 
-func roomDeltaProto(delta *domain.RoomDelta) *internalpb.BattleRoomDelta {
-	result := &internalpb.BattleRoomDelta{}
-	if delta == nil {
-		return result
+func battleStatePayloadType(mode components.RestoreMode) internalpb.StatePayloadType {
+	switch mode {
+	case components.RestoreModeDelta:
+		return internalpb.StatePayloadType_STATE_PAYLOAD_TYPE_BATTLE_DELTA
+	case components.RestoreModeNoop:
+		return internalpb.StatePayloadType_STATE_PAYLOAD_TYPE_UNSPECIFIED
+	default:
+		return internalpb.StatePayloadType_STATE_PAYLOAD_TYPE_BATTLE_SNAPSHOT
 	}
-	result.RoomId = delta.RoomID
-	result.FromStateVersion = delta.FromStateVersion
-	result.ToStateVersion = delta.ToStateVersion
-	result.Tick = delta.Tick
-	result.Status = string(delta.Status)
-	result.RemovedPlayerIds = append(result.RemovedPlayerIds, delta.RemovedPlayerIDs...)
-	for _, player := range delta.UpsertPlayers {
-		result.UpsertPlayers = append(result.UpsertPlayers, &internalpb.BattlePlayerState{
-			PlayerId:  player.PlayerID,
-			Hp:        player.HP,
-			PositionX: player.PositionX,
-			PositionY: player.PositionY,
-		})
-	}
-	return result
-}
-
-func roomSnapshotProto(room *domain.Room) *internalpb.BattleRoomSnapshot {
-	snapshot := &internalpb.BattleRoomSnapshot{
-		RoomId:             room.ID,
-		Tick:               room.Tick,
-		StateVersion:       room.StateVersion,
-		Status:             string(room.Status),
-		UpdatedAtUnixMilli: room.UpdatedAt.UnixMilli(),
-		Players:            make([]*internalpb.BattlePlayerState, 0, len(room.Players)),
-	}
-	playerIDs := make([]string, 0, len(room.Players))
-	for playerID := range room.Players {
-		playerIDs = append(playerIDs, playerID)
-	}
-	sort.Strings(playerIDs)
-	for _, playerID := range playerIDs {
-		player := room.Players[playerID]
-		snapshot.Players = append(snapshot.Players, &internalpb.BattlePlayerState{
-			PlayerId:  player.PlayerID,
-			Hp:        player.HP,
-			PositionX: player.PositionX,
-			PositionY: player.PositionY,
-		})
-	}
-	return snapshot
 }
 
 func (m *Module) RegisterRoutes(gin.IRouter) {}

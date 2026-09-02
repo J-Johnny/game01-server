@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"server/common/mongodb"
 	"server/common/streaming"
+	statepb "server/proto/gen/client/state"
 	internalpb "server/proto/gen/internalpb"
 	"server/services/lobby/domain"
 )
@@ -70,7 +71,10 @@ func TestPlayerComponentCreatesSettlesAndRestoresSnapshot(t *testing.T) {
 	if !state.Available {
 		t.Fatal("snapshot was unavailable")
 	}
-	snapshot := &internalpb.LobbyPlayerSnapshot{}
+	if state.PayloadType != internalpb.StatePayloadType_STATE_PAYLOAD_TYPE_LOBBY_SNAPSHOT || state.SchemaVersion != StateSchemaVersion {
+		t.Fatalf("unexpected state metadata: %s", state)
+	}
+	snapshot := &statepb.LobbyStateSnapshot{}
 	if err := proto.Unmarshal(state.Snapshot, snapshot); err != nil {
 		t.Fatalf("decode snapshot: %v", err)
 	}

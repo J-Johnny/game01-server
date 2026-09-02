@@ -35,6 +35,13 @@ enum RestoreMode {
   RESTORE_MODE_NOOP = 2;
 }
 
+enum StatePayloadType {
+  STATE_PAYLOAD_TYPE_UNSPECIFIED = 0;
+  STATE_PAYLOAD_TYPE_LOBBY_SNAPSHOT = 1;
+  STATE_PAYLOAD_TYPE_BATTLE_SNAPSHOT = 2;
+  STATE_PAYLOAD_TYPE_BATTLE_DELTA = 3;
+}
+
 message RestorePlayerStateResponse {
   ServiceType service_type = 1;
   string player_id = 2;
@@ -43,4 +50,6 @@ message RestorePlayerStateResponse {
   bool available = 5;
   RestoreMode mode = 6;
   uint64 base_state_version = 7;
+  StatePayloadType payload_type = 8;
+  uint32 schema_version = 9;
 }

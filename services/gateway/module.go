@@ -8,16 +8,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"google.golang.org/protobuf/proto"
 	"server/common/app"
 	"server/common/reliability"
 	"server/common/streaming"
 	gatewaypb "server/proto/gen/client"
-	statepb "server/proto/gen/client/state"
 	internalpb "server/proto/gen/internalpb"
 	servicecommon "server/services/common"
 	"server/services/gateway/session"
+
+	"github.com/gin-gonic/gin"
+	"google.golang.org/protobuf/proto"
 )
 
 type Module struct {
@@ -90,7 +90,11 @@ func (m *Module) restoreState(ctx context.Context, connection *Connection, playe
 		if err != nil {
 			continue
 		}
-		response, err := client.Request(ctx, &internalpb.InternalEnvelope{TargetService: target.service, MessageId: uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST), PlayerId: playerID, Payload: payload})
+		response, err := client.Request(ctx, &internalpb.InternalEnvelope{
+			TargetService: target.service,
+			MessageId:     uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST),
+			PlayerId:      playerID,
+			Payload:       payload})
 		if err != nil || response.Kind != internalpb.EnvelopeKind_ENVELOPE_KIND_RESPONSE {
 			continue
 		}
@@ -98,87 +102,21 @@ func (m *Module) restoreState(ctx context.Context, connection *Connection, playe
 		if proto.Unmarshal(response.Payload, state) != nil {
 			continue
 		}
-		clientSnapshot, err := m.toClientState(target.name, state.Mode, state.Snapshot)
-		if err != nil {
-			continue
-		}
 		event, err := proto.Marshal(&gatewaypb.StateRestoreEvent{
 			Service:          target.name,
 			PlayerId:         state.PlayerId,
 			StateVersion:     state.StateVersion,
-			Snapshot:         clientSnapshot,
+			Snapshot:         state.Snapshot,
 			Available:        state.Available,
 			Mode:             gatewaypb.RestoreMode(state.Mode),
 			BaseStateVersion: state.BaseStateVersion,
+			PayloadType:      gatewaypb.StatePayloadType(state.PayloadType),
+			SchemaVersion:    state.SchemaVersion,
 		})
 		if err == nil {
 			_ = connection.Send(marshalGatewayEvent(gatewaypb.ClientMessageId_CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT, sessionID, event))
 		}
 	}
-}
-
-func (m *Module) toClientState(service string, mode internalpb.RestoreMode, payload []byte) ([]byte, error) {
-	if mode == internalpb.RestoreMode_RESTORE_MODE_NOOP || len(payload) == 0 {
-		return nil, nil
-	}
-	if service == "lobby" {
-		internalState := &internalpb.LobbyPlayerSnapshot{}
-		if err := proto.Unmarshal(payload, internalState); err != nil {
-			return nil, err
-		}
-		return proto.Marshal(&statepb.LobbyStateSnapshot{
-			PlayerId:       internalState.PlayerId,
-			AccountId:      internalState.AccountId,
-			Nickname:       internalState.Nickname,
-			Region:         internalState.Region,
-			ProfileVersion: internalState.ProfileVersion,
-			AssetVersion:   internalState.AssetVersion,
-			Currency:       internalState.Currency,
-		})
-	}
-	if mode == internalpb.RestoreMode_RESTORE_MODE_DELTA {
-		internalState := &internalpb.BattleRoomDelta{}
-		if err := proto.Unmarshal(payload, internalState); err != nil {
-			return nil, err
-		}
-		result := &statepb.BattleRoomDelta{
-			RoomId:           internalState.RoomId,
-			FromStateVersion: internalState.FromStateVersion,
-			ToStateVersion:   internalState.ToStateVersion,
-			Tick:             internalState.Tick,
-			Status:           internalState.Status,
-			RemovedPlayerIds: internalState.RemovedPlayerIds,
-		}
-		for _, player := range internalState.UpsertPlayers {
-			result.UpsertPlayers = append(result.UpsertPlayers, &statepb.BattlePlayerState{
-				PlayerId:  player.PlayerId,
-				Hp:        player.Hp,
-				PositionX: player.PositionX,
-				PositionY: player.PositionY,
-			})
-		}
-		return proto.Marshal(result)
-	}
-	internalState := &internalpb.BattleRoomSnapshot{}
-	if err := proto.Unmarshal(payload, internalState); err != nil {
-		return nil, err
-	}
-	result := &statepb.BattleRoomSnapshot{
-		RoomId:             internalState.RoomId,
-		Tick:               internalState.Tick,
-		StateVersion:       internalState.StateVersion,
-		Status:             internalState.Status,
-		UpdatedAtUnixMilli: internalState.UpdatedAtUnixMilli,
-	}
-	for _, player := range internalState.Players {
-		result.Players = append(result.Players, &statepb.BattlePlayerState{
-			PlayerId:  player.PlayerId,
-			Hp:        player.Hp,
-			PositionX: player.PositionX,
-			PositionY: player.PositionY,
-		})
-	}
-	return proto.Marshal(result)
 }
 
 func marshalGatewayEvent(messageID gatewaypb.ClientMessageId, sessionID string, payload []byte) []byte {

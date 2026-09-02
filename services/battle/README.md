@@ -12,7 +12,7 @@
 - `players.player_id` 普通索引，用于 Gateway Resume 按玩家查找所在房间。
 - 快照包含完整房间状态，不记录客户端输入命令，恢复后由 Battle 继续作为唯一权威来源。
 
-Battle 收到 `RestorePlayerStateRequest` 后根据客户端版本返回三种模式：版本一致返回 `NOOP`；版本落后且内存 Ring Buffer 存在连续变更时返回 `DELTA`（`BattleRoomDelta`）；否则返回 `FULL` 完整 `BattleRoomSnapshot`。Ring Buffer 默认保留最近 1024 个版本，进程重启后因无增量历史自动回退完整快照。Gateway 只透传模式、基准版本和 payload，客户端负责校验并应用。
+Battle 收到 `RestorePlayerStateRequest` 后根据客户端版本返回三种模式：版本一致返回 `NOOP`；版本落后且内存 Ring Buffer 存在连续变更时返回 `DELTA`（`BattleRoomDelta`）；否则返回 `FULL` 完整 `BattleRoomSnapshot`。Ring Buffer 默认保留最近 1024 个版本，进程重启后因无增量历史自动回退完整快照。Battle 自行编码公开客户端状态协议并填写 `payload_type/schema_version`；Gateway 只透传模式、元数据和 payload，客户端负责校验并应用。
 
 ## 使用方式
 

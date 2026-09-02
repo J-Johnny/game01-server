@@ -5,6 +5,8 @@ package game01.client.state;
 option go_package = "server/proto/gen/client/state;statepb";
 option csharp_namespace = "Game01.Protocol.Client.State";
 
+// All state messages in this file currently use schema version 1.
+
 message LobbyStateSnapshot {
   string player_id = 1;
   string account_id = 2;

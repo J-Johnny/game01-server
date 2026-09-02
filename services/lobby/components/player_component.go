@@ -185,15 +185,7 @@ func (c *PlayerComponent) restore(ctx context.Context, _ streaming.Peer, envelop
 		mode = internalpb.RestoreMode_RESTORE_MODE_NOOP
 		baseStateVersion = request.LastStateVersion
 	} else {
-		payload, err = proto.Marshal(&internalpb.LobbyPlayerSnapshot{
-			PlayerId:       snapshot.Player.ID,
-			AccountId:      snapshot.Player.AccountID,
-			Nickname:       snapshot.Player.Nickname,
-			Region:         snapshot.Player.Region,
-			ProfileVersion: snapshot.Player.ProfileVersion,
-			AssetVersion:   snapshot.Assets.AssetVersion,
-			Currency:       snapshot.Assets.Currency,
-		})
+		payload, err = MarshalStateSnapshot(*snapshot)
 	}
 	if err != nil {
 		return nil, err
@@ -208,6 +200,15 @@ func (c *PlayerComponent) restore(ctx context.Context, _ streaming.Peer, envelop
 			Available:        true,
 			Mode:             mode,
 			BaseStateVersion: baseStateVersion,
+			PayloadType:      lobbyStatePayloadType(mode),
+			SchemaVersion:    StateSchemaVersion,
 		},
 	}, nil
+}
+
+func lobbyStatePayloadType(mode internalpb.RestoreMode) internalpb.StatePayloadType {
+	if mode == internalpb.RestoreMode_RESTORE_MODE_NOOP {
+		return internalpb.StatePayloadType_STATE_PAYLOAD_TYPE_UNSPECIFIED
+	}
+	return internalpb.StatePayloadType_STATE_PAYLOAD_TYPE_LOBBY_SNAPSHOT
 }

@@ -198,6 +198,58 @@ func (RestoreMode) EnumDescriptor() ([]byte, []int) {
 	return file_client_gateway_proto_rawDescGZIP(), []int{2}
 }
 
+type StatePayloadType int32
+
+const (
+	StatePayloadType_STATE_PAYLOAD_TYPE_UNSPECIFIED     StatePayloadType = 0
+	StatePayloadType_STATE_PAYLOAD_TYPE_LOBBY_SNAPSHOT  StatePayloadType = 1
+	StatePayloadType_STATE_PAYLOAD_TYPE_BATTLE_SNAPSHOT StatePayloadType = 2
+	StatePayloadType_STATE_PAYLOAD_TYPE_BATTLE_DELTA    StatePayloadType = 3
+)
+
+// Enum value maps for StatePayloadType.
+var (
+	StatePayloadType_name = map[int32]string{
+		0: "STATE_PAYLOAD_TYPE_UNSPECIFIED",
+		1: "STATE_PAYLOAD_TYPE_LOBBY_SNAPSHOT",
+		2: "STATE_PAYLOAD_TYPE_BATTLE_SNAPSHOT",
+		3: "STATE_PAYLOAD_TYPE_BATTLE_DELTA",
+	}
+	StatePayloadType_value = map[string]int32{
+		"STATE_PAYLOAD_TYPE_UNSPECIFIED":     0,
+		"STATE_PAYLOAD_TYPE_LOBBY_SNAPSHOT":  1,
+		"STATE_PAYLOAD_TYPE_BATTLE_SNAPSHOT": 2,
+		"STATE_PAYLOAD_TYPE_BATTLE_DELTA":    3,
+	}
+)
+
+func (x StatePayloadType) Enum() *StatePayloadType {
+	p := new(StatePayloadType)
+	*p = x
+	return p
+}
+
+func (x StatePayloadType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (StatePayloadType) Descriptor() protoreflect.EnumDescriptor {
+	return file_client_gateway_proto_enumTypes[3].Descriptor()
+}
+
+func (StatePayloadType) Type() protoreflect.EnumType {
+	return &file_client_gateway_proto_enumTypes[3]
+}
+
+func (x StatePayloadType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use StatePayloadType.Descriptor instead.
+func (StatePayloadType) EnumDescriptor() ([]byte, []int) {
+	return file_client_gateway_proto_rawDescGZIP(), []int{3}
+}
+
 type Envelope struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MessageId     ClientMessageId        `protobuf:"varint,1,opt,name=message_id,json=messageId,proto3,enum=game01.client.gateway.ClientMessageId" json:"message_id,omitempty"`
@@ -791,6 +843,8 @@ type StateRestoreEvent struct {
 	Available        bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
 	Mode             RestoreMode            `protobuf:"varint,6,opt,name=mode,proto3,enum=game01.client.gateway.RestoreMode" json:"mode,omitempty"`
 	BaseStateVersion uint64                 `protobuf:"varint,7,opt,name=base_state_version,json=baseStateVersion,proto3" json:"base_state_version,omitempty"`
+	PayloadType      StatePayloadType       `protobuf:"varint,8,opt,name=payload_type,json=payloadType,proto3,enum=game01.client.gateway.StatePayloadType" json:"payload_type,omitempty"`
+	SchemaVersion    uint32                 `protobuf:"varint,9,opt,name=schema_version,json=schemaVersion,proto3" json:"schema_version,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -874,6 +928,20 @@ func (x *StateRestoreEvent) GetBaseStateVersion() uint64 {
 	return 0
 }
 
+func (x *StateRestoreEvent) GetPayloadType() StatePayloadType {
+	if x != nil {
+		return x.PayloadType
+	}
+	return StatePayloadType_STATE_PAYLOAD_TYPE_UNSPECIFIED
+}
+
+func (x *StateRestoreEvent) GetSchemaVersion() uint32 {
+	if x != nil {
+		return x.SchemaVersion
+	}
+	return 0
+}
+
 var File_client_gateway_proto protoreflect.FileDescriptor
 
 const file_client_gateway_proto_rawDesc = "" +
@@ -940,7 +1008,7 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\tplayer_id\x18\x05 \x01(\tR\bplayerId\"=\n" +
 	"\rErrorResponse\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\rR\x04code\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x8f\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x82\x03\n" +
 	"\x11StateRestoreEvent\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12#\n" +
@@ -948,7 +1016,9 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\bsnapshot\x18\x04 \x01(\fR\bsnapshot\x12\x1c\n" +
 	"\tavailable\x18\x05 \x01(\bR\tavailable\x126\n" +
 	"\x04mode\x18\x06 \x01(\x0e2\".game01.client.gateway.RestoreModeR\x04mode\x12,\n" +
-	"\x12base_state_version\x18\a \x01(\x04R\x10baseStateVersion*\xf9\x02\n" +
+	"\x12base_state_version\x18\a \x01(\x04R\x10baseStateVersion\x12J\n" +
+	"\fpayload_type\x18\b \x01(\x0e2'.game01.client.gateway.StatePayloadTypeR\vpayloadType\x12%\n" +
+	"\x0eschema_version\x18\t \x01(\rR\rschemaVersion*\xf9\x02\n" +
 	"\x0fClientMessageId\x12!\n" +
 	"\x1dCLIENT_MESSAGE_ID_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fCLIENT_MESSAGE_ID_LOGIN_REQUEST\x10\x01\x12$\n" +
@@ -970,7 +1040,12 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\vRestoreMode\x12\x15\n" +
 	"\x11RESTORE_MODE_FULL\x10\x00\x12\x16\n" +
 	"\x12RESTORE_MODE_DELTA\x10\x01\x12\x15\n" +
-	"\x11RESTORE_MODE_NOOP\x10\x02BLZ)server/proto/gen/client/gateway;gatewaypb\xaa\x02\x1eGame01.Protocol.Client.Gatewayb\x06proto3"
+	"\x11RESTORE_MODE_NOOP\x10\x02*\xaa\x01\n" +
+	"\x10StatePayloadType\x12\"\n" +
+	"\x1eSTATE_PAYLOAD_TYPE_UNSPECIFIED\x10\x00\x12%\n" +
+	"!STATE_PAYLOAD_TYPE_LOBBY_SNAPSHOT\x10\x01\x12&\n" +
+	"\"STATE_PAYLOAD_TYPE_BATTLE_SNAPSHOT\x10\x02\x12#\n" +
+	"\x1fSTATE_PAYLOAD_TYPE_BATTLE_DELTA\x10\x03BLZ)server/proto/gen/client/gateway;gatewaypb\xaa\x02\x1eGame01.Protocol.Client.Gatewayb\x06proto3"
 
 var (
 	file_client_gateway_proto_rawDescOnce sync.Once
@@ -984,33 +1059,35 @@ func file_client_gateway_proto_rawDescGZIP() []byte {
 	return file_client_gateway_proto_rawDescData
 }
 
-var file_client_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_client_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_client_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_client_gateway_proto_goTypes = []any{
 	(ClientMessageId)(0),         // 0: game01.client.gateway.ClientMessageId
 	(AuthProvider)(0),            // 1: game01.client.gateway.AuthProvider
 	(RestoreMode)(0),             // 2: game01.client.gateway.RestoreMode
-	(*Envelope)(nil),             // 3: game01.client.gateway.Envelope
-	(*LoginRequest)(nil),         // 4: game01.client.gateway.LoginRequest
-	(*LoginResponse)(nil),        // 5: game01.client.gateway.LoginResponse
-	(*RefreshLoginRequest)(nil),  // 6: game01.client.gateway.RefreshLoginRequest
-	(*RefreshLoginResponse)(nil), // 7: game01.client.gateway.RefreshLoginResponse
-	(*ResumeRequest)(nil),        // 8: game01.client.gateway.ResumeRequest
-	(*ResumeResponse)(nil),       // 9: game01.client.gateway.ResumeResponse
-	(*ErrorResponse)(nil),        // 10: game01.client.gateway.ErrorResponse
-	(*StateRestoreEvent)(nil),    // 11: game01.client.gateway.StateRestoreEvent
-	nil,                          // 12: game01.client.gateway.ResumeRequest.StateVersionsEntry
+	(StatePayloadType)(0),        // 3: game01.client.gateway.StatePayloadType
+	(*Envelope)(nil),             // 4: game01.client.gateway.Envelope
+	(*LoginRequest)(nil),         // 5: game01.client.gateway.LoginRequest
+	(*LoginResponse)(nil),        // 6: game01.client.gateway.LoginResponse
+	(*RefreshLoginRequest)(nil),  // 7: game01.client.gateway.RefreshLoginRequest
+	(*RefreshLoginResponse)(nil), // 8: game01.client.gateway.RefreshLoginResponse
+	(*ResumeRequest)(nil),        // 9: game01.client.gateway.ResumeRequest
+	(*ResumeResponse)(nil),       // 10: game01.client.gateway.ResumeResponse
+	(*ErrorResponse)(nil),        // 11: game01.client.gateway.ErrorResponse
+	(*StateRestoreEvent)(nil),    // 12: game01.client.gateway.StateRestoreEvent
+	nil,                          // 13: game01.client.gateway.ResumeRequest.StateVersionsEntry
 }
 var file_client_gateway_proto_depIdxs = []int32{
 	0,  // 0: game01.client.gateway.Envelope.message_id:type_name -> game01.client.gateway.ClientMessageId
 	1,  // 1: game01.client.gateway.LoginRequest.provider:type_name -> game01.client.gateway.AuthProvider
-	12, // 2: game01.client.gateway.ResumeRequest.state_versions:type_name -> game01.client.gateway.ResumeRequest.StateVersionsEntry
+	13, // 2: game01.client.gateway.ResumeRequest.state_versions:type_name -> game01.client.gateway.ResumeRequest.StateVersionsEntry
 	2,  // 3: game01.client.gateway.StateRestoreEvent.mode:type_name -> game01.client.gateway.RestoreMode
-	4,  // [4:4] is the sub-list for method output_type
-	4,  // [4:4] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	3,  // 4: game01.client.gateway.StateRestoreEvent.payload_type:type_name -> game01.client.gateway.StatePayloadType
+	5,  // [5:5] is the sub-list for method output_type
+	5,  // [5:5] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_client_gateway_proto_init() }
@@ -1023,7 +1100,7 @@ func file_client_gateway_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_client_gateway_proto_rawDesc), len(file_client_gateway_proto_rawDesc)),
-			NumEnums:      3,
+			NumEnums:      4,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,

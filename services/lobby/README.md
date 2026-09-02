@@ -19,7 +19,7 @@ Lobby 使用 MongoDB 官方 Driver，并在 MongoDB Replica Set 事务中维护�
 
 - `EnsurePlayerRequest`：Gateway 认证成功后调用。首次登录会在一个 MongoDB 事务内创建玩家档案、初始资产和初始快照，再调用 UserCenter 的 `LinkPlayer` 完成账号关联。
 - `SettlementRequest`：Battle 通过 `LobbySettlementClient` 提交。Lobby 在同一个事务内写入账本、原子更新资产余额并刷新快照；重复 `settlement_id` 直接返回已提交结果，余额不足时整个事务回滚。
-- `RestorePlayerStateRequest`：Gateway Resume 后调用。Lobby 优先从 `player_snapshots` 返回状态，快照缺失时由玩家档案和资产重建。
+- `RestorePlayerStateRequest`：Gateway Resume 后调用。Lobby 优先从 `player_snapshots` 返回状态，快照缺失时由玩家档案和资产重建；Lobby 自行编码公开 `LobbyStateSnapshot`，填写 `LOBBY_SNAPSHOT` 与 schema version `1`，Gateway 仅透传。
 
 服务间只使用 gRPC Streaming 的 `InternalEnvelope`。Battle 不得直接引用 Lobby Repository 或 MongoDB 集合。
 
