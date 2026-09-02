@@ -18,6 +18,7 @@ import (
 	"server/common/idgen"
 	"server/common/mongodb"
 	"server/common/streaming"
+	gatewaypb "server/proto/gen/client"
 	internalpb "server/proto/gen/internalpb"
 	"server/services/usercenter/domain"
 	"server/services/usercenter/repository"
@@ -89,6 +90,104 @@ func (c *DomainAuthComponent) RegisterInternal(router *streaming.Router) {
 	router.Register(internalpb.ServiceType_SERVICE_TYPE_USERCENTER, uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST), streaming.MessageHandlerFunc(c.revokeRefreshToken))
 	router.Register(internalpb.ServiceType_SERVICE_TYPE_USERCENTER, uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST), streaming.MessageHandlerFunc(c.passwordAuthenticate))
 	router.Register(internalpb.ServiceType_SERVICE_TYPE_USERCENTER, uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST), streaming.MessageHandlerFunc(c.linkPlayer))
+}
+
+func (c *DomainAuthComponent) clientLoginAuthenticate(ctx context.Context, _ streaming.Peer, envelope *internalpb.InternalEnvelope) (*streaming.MessageResult, error) {
+	request := &internalpb.ClientLoginAuthenticateRequest{}
+	if err := proto.Unmarshal(envelope.Payload, request); err != nil {
+		return nil, errors.New("invalid client login authentication request")
+	}
+	login := &gatewaypb.LoginRequest{}
+	if err := proto.Unmarshal(request.LoginRequest, login); err != nil {
+		return nil, errors.New("invalid client login request")
+	}
+	if strings.TrimSpace(login.InstallId) == "" {
+		return nil, errors.New("install_id is required")
+	}
+	return c.withIdempotency(ctx, login.IdempotencyKey, "client_login_authenticate", login, &internalpb.ClientLoginAuthenticateResponse{}, func(executionContext context.Context) (*streaming.MessageResult, error) {
+		return c.clientLoginAuthenticateCore(executionContext, login)
+	})
+}
+
+func (c *DomainAuthComponent) clientLoginAuthenticateCore(ctx context.Context, login *gatewaypb.LoginRequest) (*streaming.MessageResult, error) {
+	switch login.Provider {
+	case gatewaypb.AuthProvider_AUTH_PROVIDER_GUEST:
+		result, err := c.guestAuthenticateCore(ctx, &internalpb.GuestAuthenticateRequest{
+			InstallId:      login.InstallId,
+			IdempotencyKey: login.IdempotencyKey,
+		})
+		if err != nil {
+			return nil, err
+		}
+		message := result.Message.(*internalpb.GuestAuthenticateResponse)
+		return clientLoginGrant(message.AccountId, message.RefreshToken, message.RefreshTokenExpireAtUnix), nil
+	case gatewaypb.AuthProvider_AUTH_PROVIDER_PASSWORD:
+		result, err := c.passwordAuthenticateCore(ctx, &internalpb.PasswordAuthenticateRequest{
+			Username:       login.Username,
+			Password:       login.Password,
+			InstallId:      login.InstallId,
+			IdempotencyKey: login.IdempotencyKey,
+		})
+		if err != nil {
+			return nil, err
+		}
+		message := result.Message.(*internalpb.PasswordAuthenticateResponse)
+		return clientLoginGrant(message.AccountId, message.RefreshToken, message.RefreshTokenExpireAtUnix), nil
+	default:
+		return nil, errors.New("authentication provider is not enabled")
+	}
+}
+
+func (c *DomainAuthComponent) clientRefreshAuthenticate(ctx context.Context, _ streaming.Peer, envelope *internalpb.InternalEnvelope) (*streaming.MessageResult, error) {
+	request := &internalpb.ClientRefreshAuthenticateRequest{}
+	if err := proto.Unmarshal(envelope.Payload, request); err != nil {
+		return nil, errors.New("invalid client refresh authentication request")
+	}
+	refresh := &gatewaypb.RefreshLoginRequest{}
+	if err := proto.Unmarshal(request.RefreshLoginRequest, refresh); err != nil {
+		return nil, errors.New("invalid client refresh login request")
+	}
+	if strings.TrimSpace(refresh.RefreshToken) == "" || strings.TrimSpace(refresh.InstallId) == "" {
+		return nil, errors.New("refresh_token and install_id are required")
+	}
+	return c.withIdempotency(ctx, refresh.IdempotencyKey, "client_refresh_authenticate", refresh, &internalpb.ClientRefreshAuthenticateResponse{}, func(executionContext context.Context) (*streaming.MessageResult, error) {
+		result, err := c.refreshAuthenticateCore(executionContext, &internalpb.RefreshAuthenticateRequest{
+			RefreshToken:   refresh.RefreshToken,
+			InstallId:      refresh.InstallId,
+			IdempotencyKey: refresh.IdempotencyKey,
+		})
+		if err != nil {
+			return nil, err
+		}
+		message := result.Message.(*internalpb.RefreshAuthenticateResponse)
+		return clientRefreshGrant(message.AccountId, message.RefreshToken, message.RefreshTokenExpireAtUnix), nil
+	})
+}
+
+func clientLoginGrant(accountID, refreshToken string, expiresAtUnix int64) *streaming.MessageResult {
+	return &streaming.MessageResult{
+		MessageID: uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_RESPONSE),
+		Message: &internalpb.ClientLoginAuthenticateResponse{
+			Grant: &internalpb.AuthenticationGrant{
+				AccountId:                accountID,
+				RefreshToken:             refreshToken,
+				RefreshTokenExpireAtUnix: expiresAtUnix,
+			},
+		},
+	}
+}
+
+func clientRefreshGrant(accountID, refreshToken string, expiresAtUnix int64) *streaming.MessageResult {
+	return &streaming.MessageResult{
+		MessageID: uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_RESPONSE),
+		Message: &internalpb.ClientRefreshAuthenticateResponse{
+			Grant: &internalpb.AuthenticationGrant{
+				AccountId:                accountID,
+				RefreshToken:             refreshToken,
+				RefreshTokenExpireAtUnix: expiresAtUnix,
+			},
+		},
+	}
 }
 
 func (c *DomainAuthComponent) linkPlayer(ctx context.Context, _ streaming.Peer, envelope *internalpb.InternalEnvelope) (*streaming.MessageResult, error) {

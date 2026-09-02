@@ -8,6 +8,7 @@ import (
 	"server/common/observability"
 	"server/common/streaming"
 	gatewaypb "server/proto/gen/client"
+	servicecommon "server/services/common"
 	"server/services/gateway/session"
 )
 
@@ -65,7 +66,7 @@ func (m *ErrorMapper) Known(code gatewaypb.GatewayErrorCode, message string) Pub
 }
 
 func (m *ErrorMapper) Map(err error, fallback gatewaypb.GatewayErrorCode, fallbackMessage string) PublicError {
-	if errors.Is(err, ErrUserCenterUnavailable) || errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout) || errors.Is(err, context.DeadlineExceeded) {
+	if errors.Is(err, servicecommon.ErrAuthenticationServiceUnavailable) || errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout) || errors.Is(err, context.DeadlineExceeded) {
 		return m.Known(ErrorService, "required service is temporarily unavailable")
 	}
 	if errors.Is(err, session.ErrNotFound) || errors.Is(err, session.ErrInvalidToken) || errors.Is(err, session.ErrSessionExpiry) || errors.Is(err, session.ErrSessionConflict) {

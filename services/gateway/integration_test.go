@@ -15,6 +15,7 @@ import (
 	"server/common/streaming"
 	gatewaypb "server/proto/gen/client"
 	internalpb "server/proto/gen/internalpb"
+	servicecommon "server/services/common"
 	"server/services/gateway/session"
 	"server/services/usercenter/components"
 )
@@ -37,7 +38,7 @@ func TestPasswordLoginOverWebSocketThroughUserCenterStreaming(t *testing.T) {
 	}
 	defer streamClient.Close()
 
-	authenticator := NewUserCenterAuthenticator(func() (*streaming.Client, bool) {
+	authenticator := servicecommon.NewStreamingAuthenticationClient(func() (*streaming.Client, bool) {
 		return streamClient, true
 	})
 	dispatcher := NewDispatcher(authenticator, session.NewManager(session.NewMemoryStore(), "gateway-integration", time.Hour, time.Minute), staticPlayerResolver{})
@@ -108,7 +109,7 @@ func TestLoginOverWebSocketReturnsAuthenticationError(t *testing.T) {
 	}
 	defer streamClient.Close()
 
-	dispatcher := NewDispatcher(NewUserCenterAuthenticator(func() (*streaming.Client, bool) {
+	dispatcher := NewDispatcher(servicecommon.NewStreamingAuthenticationClient(func() (*streaming.Client, bool) {
 		return streamClient, true
 	}), session.NewManager(session.NewMemoryStore(), "gateway-integration", time.Hour, time.Minute), staticPlayerResolver{})
 	router := gin.New()
@@ -172,8 +173,10 @@ func startUserCenterForIntegration(t *testing.T) (*grpc.Server, string) {
 	t.Helper()
 	store := newGatewayDomainStore()
 	auth := components.NewDomainAuthComponent(store, &gatewayIdentityStore{store}, &gatewayTokenStore{store}, gatewayDomainUnitOfWork{}, time.Hour)
+	clientAuth := components.NewClientAuthComponent(auth)
 	router := streaming.NewRouter()
 	auth.RegisterInternal(router)
+	clientAuth.RegisterInternal(router)
 	grpcServer := grpc.NewServer()
 	streaming.Register(grpcServer, router)
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

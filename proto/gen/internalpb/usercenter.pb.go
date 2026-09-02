@@ -24,17 +24,21 @@ const (
 type UserCenterMessageId int32
 
 const (
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_UNSPECIFIED                    UserCenterMessageId = 0
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_REQUEST     UserCenterMessageId = 1001
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_RESPONSE    UserCenterMessageId = 1101
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_REQUEST   UserCenterMessageId = 1002
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_RESPONSE  UserCenterMessageId = 1102
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST   UserCenterMessageId = 1003
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE  UserCenterMessageId = 1103
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST  UserCenterMessageId = 1004
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE UserCenterMessageId = 1104
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST            UserCenterMessageId = 1005
-	UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE           UserCenterMessageId = 1105
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_UNSPECIFIED                          UserCenterMessageId = 0
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_REQUEST           UserCenterMessageId = 1001
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_RESPONSE          UserCenterMessageId = 1101
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_REQUEST         UserCenterMessageId = 1002
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_RESPONSE        UserCenterMessageId = 1102
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST         UserCenterMessageId = 1003
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE        UserCenterMessageId = 1103
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST        UserCenterMessageId = 1004
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE       UserCenterMessageId = 1104
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST                  UserCenterMessageId = 1005
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE                 UserCenterMessageId = 1105
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_REQUEST    UserCenterMessageId = 1006
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_RESPONSE   UserCenterMessageId = 1106
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_REQUEST  UserCenterMessageId = 1007
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_RESPONSE UserCenterMessageId = 1107
 )
 
 // Enum value maps for UserCenterMessageId.
@@ -51,19 +55,27 @@ var (
 		1104: "USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE",
 		1005: "USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST",
 		1105: "USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE",
+		1006: "USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_REQUEST",
+		1106: "USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_RESPONSE",
+		1007: "USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_REQUEST",
+		1107: "USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_RESPONSE",
 	}
 	UserCenterMessageId_value = map[string]int32{
-		"USER_CENTER_MESSAGE_ID_UNSPECIFIED":                    0,
-		"USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_REQUEST":     1001,
-		"USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_RESPONSE":    1101,
-		"USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_REQUEST":   1002,
-		"USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_RESPONSE":  1102,
-		"USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST":   1003,
-		"USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE":  1103,
-		"USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST":  1004,
-		"USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE": 1104,
-		"USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST":            1005,
-		"USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE":           1105,
+		"USER_CENTER_MESSAGE_ID_UNSPECIFIED":                          0,
+		"USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_REQUEST":           1001,
+		"USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_RESPONSE":          1101,
+		"USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_REQUEST":         1002,
+		"USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_RESPONSE":        1102,
+		"USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST":         1003,
+		"USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE":        1103,
+		"USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST":        1004,
+		"USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE":       1104,
+		"USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST":                  1005,
+		"USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE":                 1105,
+		"USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_REQUEST":    1006,
+		"USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_RESPONSE":   1106,
+		"USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_REQUEST":  1007,
+		"USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_RESPONSE": 1107,
 	}
 )
 
@@ -678,6 +690,242 @@ func (x *LinkPlayerResponse) GetPlayerId() string {
 	return ""
 }
 
+type ClientLoginAuthenticateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LoginRequest  []byte                 `protobuf:"bytes,1,opt,name=login_request,json=loginRequest,proto3" json:"login_request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClientLoginAuthenticateRequest) Reset() {
+	*x = ClientLoginAuthenticateRequest{}
+	mi := &file_internal_usercenter_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientLoginAuthenticateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientLoginAuthenticateRequest) ProtoMessage() {}
+
+func (x *ClientLoginAuthenticateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_usercenter_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientLoginAuthenticateRequest.ProtoReflect.Descriptor instead.
+func (*ClientLoginAuthenticateRequest) Descriptor() ([]byte, []int) {
+	return file_internal_usercenter_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ClientLoginAuthenticateRequest) GetLoginRequest() []byte {
+	if x != nil {
+		return x.LoginRequest
+	}
+	return nil
+}
+
+type ClientRefreshAuthenticateRequest struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	RefreshLoginRequest []byte                 `protobuf:"bytes,1,opt,name=refresh_login_request,json=refreshLoginRequest,proto3" json:"refresh_login_request,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ClientRefreshAuthenticateRequest) Reset() {
+	*x = ClientRefreshAuthenticateRequest{}
+	mi := &file_internal_usercenter_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientRefreshAuthenticateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientRefreshAuthenticateRequest) ProtoMessage() {}
+
+func (x *ClientRefreshAuthenticateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_usercenter_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientRefreshAuthenticateRequest.ProtoReflect.Descriptor instead.
+func (*ClientRefreshAuthenticateRequest) Descriptor() ([]byte, []int) {
+	return file_internal_usercenter_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ClientRefreshAuthenticateRequest) GetRefreshLoginRequest() []byte {
+	if x != nil {
+		return x.RefreshLoginRequest
+	}
+	return nil
+}
+
+type AuthenticationGrant struct {
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	AccountId                string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	RefreshToken             string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	RefreshTokenExpireAtUnix int64                  `protobuf:"varint,3,opt,name=refresh_token_expire_at_unix,json=refreshTokenExpireAtUnix,proto3" json:"refresh_token_expire_at_unix,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *AuthenticationGrant) Reset() {
+	*x = AuthenticationGrant{}
+	mi := &file_internal_usercenter_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuthenticationGrant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthenticationGrant) ProtoMessage() {}
+
+func (x *AuthenticationGrant) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_usercenter_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthenticationGrant.ProtoReflect.Descriptor instead.
+func (*AuthenticationGrant) Descriptor() ([]byte, []int) {
+	return file_internal_usercenter_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *AuthenticationGrant) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *AuthenticationGrant) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+func (x *AuthenticationGrant) GetRefreshTokenExpireAtUnix() int64 {
+	if x != nil {
+		return x.RefreshTokenExpireAtUnix
+	}
+	return 0
+}
+
+type ClientLoginAuthenticateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Grant         *AuthenticationGrant   `protobuf:"bytes,1,opt,name=grant,proto3" json:"grant,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClientLoginAuthenticateResponse) Reset() {
+	*x = ClientLoginAuthenticateResponse{}
+	mi := &file_internal_usercenter_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientLoginAuthenticateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientLoginAuthenticateResponse) ProtoMessage() {}
+
+func (x *ClientLoginAuthenticateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_usercenter_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientLoginAuthenticateResponse.ProtoReflect.Descriptor instead.
+func (*ClientLoginAuthenticateResponse) Descriptor() ([]byte, []int) {
+	return file_internal_usercenter_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ClientLoginAuthenticateResponse) GetGrant() *AuthenticationGrant {
+	if x != nil {
+		return x.Grant
+	}
+	return nil
+}
+
+type ClientRefreshAuthenticateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Grant         *AuthenticationGrant   `protobuf:"bytes,1,opt,name=grant,proto3" json:"grant,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClientRefreshAuthenticateResponse) Reset() {
+	*x = ClientRefreshAuthenticateResponse{}
+	mi := &file_internal_usercenter_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientRefreshAuthenticateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientRefreshAuthenticateResponse) ProtoMessage() {}
+
+func (x *ClientRefreshAuthenticateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_usercenter_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientRefreshAuthenticateResponse.ProtoReflect.Descriptor instead.
+func (*ClientRefreshAuthenticateResponse) Descriptor() ([]byte, []int) {
+	return file_internal_usercenter_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ClientRefreshAuthenticateResponse) GetGrant() *AuthenticationGrant {
+	if x != nil {
+		return x.Grant
+	}
+	return nil
+}
+
 var File_internal_usercenter_proto protoreflect.FileDescriptor
 
 const file_internal_usercenter_proto_rawDesc = "" +
@@ -729,7 +977,20 @@ const file_internal_usercenter_proto_rawDesc = "" +
 	"\x12LinkPlayerResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1b\n" +
-	"\tplayer_id\x18\x02 \x01(\tR\bplayerId*\xf2\x04\n" +
+	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\"E\n" +
+	"\x1eClientLoginAuthenticateRequest\x12#\n" +
+	"\rlogin_request\x18\x01 \x01(\fR\floginRequest\"V\n" +
+	" ClientRefreshAuthenticateRequest\x122\n" +
+	"\x15refresh_login_request\x18\x01 \x01(\fR\x13refreshLoginRequest\"\x99\x01\n" +
+	"\x13AuthenticationGrant\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12#\n" +
+	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12>\n" +
+	"\x1crefresh_token_expire_at_unix\x18\x03 \x01(\x03R\x18refreshTokenExpireAtUnix\"]\n" +
+	"\x1fClientLoginAuthenticateResponse\x12:\n" +
+	"\x05grant\x18\x01 \x01(\v2$.game01.internal.AuthenticationGrantR\x05grant\"_\n" +
+	"!ClientRefreshAuthenticateResponse\x12:\n" +
+	"\x05grant\x18\x01 \x01(\v2$.game01.internal.AuthenticationGrantR\x05grant*\xf4\x06\n" +
 	"\x13UserCenterMessageId\x12&\n" +
 	"\"USER_CENTER_MESSAGE_ID_UNSPECIFIED\x10\x00\x126\n" +
 	"1USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_REQUEST\x10\xe9\a\x127\n" +
@@ -741,7 +1002,11 @@ const file_internal_usercenter_proto_rawDesc = "" +
 	"4USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST\x10\xec\a\x12:\n" +
 	"5USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE\x10\xd0\b\x12/\n" +
 	"*USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST\x10\xed\a\x120\n" +
-	"+USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE\x10\xd1\bB(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
+	"+USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE\x10\xd1\b\x12=\n" +
+	"8USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_REQUEST\x10\xee\a\x12>\n" +
+	"9USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_RESPONSE\x10\xd2\b\x12?\n" +
+	":USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_REQUEST\x10\xef\a\x12@\n" +
+	";USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_RESPONSE\x10\xd3\bB(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
 
 var (
 	file_internal_usercenter_proto_rawDescOnce sync.Once
@@ -756,26 +1021,33 @@ func file_internal_usercenter_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_usercenter_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_internal_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_internal_usercenter_proto_goTypes = []any{
-	(UserCenterMessageId)(0),             // 0: game01.internal.UserCenterMessageId
-	(*GuestAuthenticateRequest)(nil),     // 1: game01.internal.GuestAuthenticateRequest
-	(*GuestAuthenticateResponse)(nil),    // 2: game01.internal.GuestAuthenticateResponse
-	(*RefreshAuthenticateRequest)(nil),   // 3: game01.internal.RefreshAuthenticateRequest
-	(*RefreshAuthenticateResponse)(nil),  // 4: game01.internal.RefreshAuthenticateResponse
-	(*RevokeRefreshTokenRequest)(nil),    // 5: game01.internal.RevokeRefreshTokenRequest
-	(*RevokeRefreshTokenResponse)(nil),   // 6: game01.internal.RevokeRefreshTokenResponse
-	(*PasswordAuthenticateRequest)(nil),  // 7: game01.internal.PasswordAuthenticateRequest
-	(*PasswordAuthenticateResponse)(nil), // 8: game01.internal.PasswordAuthenticateResponse
-	(*LinkPlayerRequest)(nil),            // 9: game01.internal.LinkPlayerRequest
-	(*LinkPlayerResponse)(nil),           // 10: game01.internal.LinkPlayerResponse
+	(UserCenterMessageId)(0),                  // 0: game01.internal.UserCenterMessageId
+	(*GuestAuthenticateRequest)(nil),          // 1: game01.internal.GuestAuthenticateRequest
+	(*GuestAuthenticateResponse)(nil),         // 2: game01.internal.GuestAuthenticateResponse
+	(*RefreshAuthenticateRequest)(nil),        // 3: game01.internal.RefreshAuthenticateRequest
+	(*RefreshAuthenticateResponse)(nil),       // 4: game01.internal.RefreshAuthenticateResponse
+	(*RevokeRefreshTokenRequest)(nil),         // 5: game01.internal.RevokeRefreshTokenRequest
+	(*RevokeRefreshTokenResponse)(nil),        // 6: game01.internal.RevokeRefreshTokenResponse
+	(*PasswordAuthenticateRequest)(nil),       // 7: game01.internal.PasswordAuthenticateRequest
+	(*PasswordAuthenticateResponse)(nil),      // 8: game01.internal.PasswordAuthenticateResponse
+	(*LinkPlayerRequest)(nil),                 // 9: game01.internal.LinkPlayerRequest
+	(*LinkPlayerResponse)(nil),                // 10: game01.internal.LinkPlayerResponse
+	(*ClientLoginAuthenticateRequest)(nil),    // 11: game01.internal.ClientLoginAuthenticateRequest
+	(*ClientRefreshAuthenticateRequest)(nil),  // 12: game01.internal.ClientRefreshAuthenticateRequest
+	(*AuthenticationGrant)(nil),               // 13: game01.internal.AuthenticationGrant
+	(*ClientLoginAuthenticateResponse)(nil),   // 14: game01.internal.ClientLoginAuthenticateResponse
+	(*ClientRefreshAuthenticateResponse)(nil), // 15: game01.internal.ClientRefreshAuthenticateResponse
 }
 var file_internal_usercenter_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	13, // 0: game01.internal.ClientLoginAuthenticateResponse.grant:type_name -> game01.internal.AuthenticationGrant
+	13, // 1: game01.internal.ClientRefreshAuthenticateResponse.grant:type_name -> game01.internal.AuthenticationGrant
+	2,  // [2:2] is the sub-list for method output_type
+	2,  // [2:2] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_internal_usercenter_proto_init() }
@@ -789,7 +1061,7 @@ func file_internal_usercenter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_usercenter_proto_rawDesc), len(file_internal_usercenter_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

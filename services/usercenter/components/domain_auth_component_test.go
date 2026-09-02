@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"server/common/streaming"
+	gatewaypb "server/proto/gen/client"
 	internalpb "server/proto/gen/internalpb"
 	"server/services/usercenter/domain"
 	"server/services/usercenter/repository"
@@ -51,6 +52,49 @@ func TestDomainAuthComponentCreatesAndRotatesAuthentication(t *testing.T) {
 
 	if _, err := component.refreshAuthenticate(context.Background(), streaming.Peer{}, &internalpb.InternalEnvelope{Payload: refreshPayload}); !errors.Is(err, domain.ErrInvalidToken) {
 		t.Fatalf("old refresh token error = %v", err)
+	}
+}
+
+func TestClientLoginAuthenticationSelectsProviderInUserCenter(t *testing.T) {
+	memory := newDomainAuthMemory()
+	component := NewDomainAuthComponent(memory.accounts, memory.identities, memory.tokens, domainAuthUnitOfWork{}, time.Hour)
+	clientAuth := NewClientAuthComponent(component)
+	login, err := proto.Marshal(&gatewaypb.LoginRequest{
+		Provider:       gatewaypb.AuthProvider_AUTH_PROVIDER_PASSWORD,
+		Username:       "client-auth-user",
+		Password:       "correct-password",
+		InstallId:      "client-auth-install",
+		IdempotencyKey: "client-auth-request",
+	})
+	if err != nil {
+		t.Fatalf("marshal client login request: %v", err)
+	}
+	payload, err := proto.Marshal(&internalpb.ClientLoginAuthenticateRequest{LoginRequest: login})
+	if err != nil {
+		t.Fatalf("marshal internal client login request: %v", err)
+	}
+	result, err := clientAuth.clientLoginAuthenticate(context.Background(), streaming.Peer{}, &internalpb.InternalEnvelope{Payload: payload})
+	if err != nil {
+		t.Fatalf("authenticate client password login: %v", err)
+	}
+	response := result.Message.(*internalpb.ClientLoginAuthenticateResponse)
+	if response.Grant == nil || response.Grant.AccountId == "" || response.Grant.RefreshToken == "" {
+		t.Fatalf("incomplete authentication grant: %s", response)
+	}
+
+	unsupported, err := proto.Marshal(&gatewaypb.LoginRequest{
+		Provider:  gatewaypb.AuthProvider_AUTH_PROVIDER_STEAM,
+		InstallId: "client-auth-install",
+	})
+	if err != nil {
+		t.Fatalf("marshal unsupported client login: %v", err)
+	}
+	payload, err = proto.Marshal(&internalpb.ClientLoginAuthenticateRequest{LoginRequest: unsupported})
+	if err != nil {
+		t.Fatalf("marshal unsupported internal client login: %v", err)
+	}
+	if _, err := clientAuth.clientLoginAuthenticate(context.Background(), streaming.Peer{}, &internalpb.InternalEnvelope{Payload: payload}); err == nil {
+		t.Fatal("unsupported provider was accepted")
 	}
 }
 

@@ -42,7 +42,7 @@ func NewModule(deps app.Dependencies) *Module {
 	base := servicecommon.NewModule("gateway", internalpb.ServiceType_SERVICE_TYPE_GATEWAY, deps)
 	store := session.NewRedisStore(deps.Redis, "game01:gateway:session:")
 	manager := session.NewManager(store, deps.Config.App.InstanceID, deps.Config.Gateway.SessionTTL, deps.Config.Gateway.ReconnectGrace)
-	authenticator := NewUserCenterAuthenticator(func() (*streaming.Client, bool) {
+	authenticator := servicecommon.NewStreamingAuthenticationClient(func() (*streaming.Client, bool) {
 		return base.Client("usercenter")
 	})
 	authenticator.SetReliability(reliability.RetryPolicy{
@@ -51,7 +51,7 @@ func NewModule(deps app.Dependencies) *Module {
 		MaxDelay:     500 * time.Millisecond,
 		Observer:     deps.Metrics.RetryObserver("gateway", "usercenter", "authenticate", classifyUserCenterError),
 		ShouldRetry: func(err error) bool {
-			return errors.Is(err, ErrUserCenterUnavailable) || errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout)
+			return errors.Is(err, servicecommon.ErrAuthenticationServiceUnavailable) || errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout)
 		},
 	}, reliability.NewCircuitBreaker(deps.Config.Gateway.CircuitFailures, deps.Config.Gateway.CircuitReset, deps.Metrics.CircuitObserver("gateway", "usercenter", "authenticate")))
 	players := NewLobbyPlayerResolver(func() (*streaming.Client, bool) {
@@ -97,7 +97,7 @@ func NewModule(deps app.Dependencies) *Module {
 }
 
 func classifyUserCenterError(err error) string {
-	if errors.Is(err, ErrUserCenterUnavailable) {
+	if errors.Is(err, servicecommon.ErrAuthenticationServiceUnavailable) {
 		return "service_unavailable"
 	}
 	if errors.Is(err, streaming.ErrConnectionClosed) {

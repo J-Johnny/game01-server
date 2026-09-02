@@ -16,6 +16,10 @@ enum UserCenterMessageId {
   USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE = 1104;
   USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST = 1005;
   USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE = 1105;
+  USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_REQUEST = 1006;
+  USER_CENTER_MESSAGE_ID_CLIENT_LOGIN_AUTHENTICATE_RESPONSE = 1106;
+  USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_REQUEST = 1007;
+  USER_CENTER_MESSAGE_ID_CLIENT_REFRESH_AUTHENTICATE_RESPONSE = 1107;
 }
 
 message GuestAuthenticateRequest {
@@ -73,4 +77,26 @@ message LinkPlayerRequest {
 message LinkPlayerResponse {
   string account_id = 1;
   string player_id = 2;
+}
+
+message ClientLoginAuthenticateRequest {
+  bytes login_request = 1;
+}
+
+message ClientRefreshAuthenticateRequest {
+  bytes refresh_login_request = 1;
+}
+
+message AuthenticationGrant {
+  string account_id = 1;
+  string refresh_token = 2;
+  int64 refresh_token_expire_at_unix = 3;
+}
+
+message ClientLoginAuthenticateResponse {
+  AuthenticationGrant grant = 1;
+}
+
+message ClientRefreshAuthenticateResponse {
+  AuthenticationGrant grant = 1;
 }
