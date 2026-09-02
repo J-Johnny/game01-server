@@ -31,6 +31,7 @@ const (
 	ClientMessageId_CLIENT_MESSAGE_ID_LOGIN_RESPONSE         ClientMessageId = 101
 	ClientMessageId_CLIENT_MESSAGE_ID_RESUME_RESPONSE        ClientMessageId = 102
 	ClientMessageId_CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE ClientMessageId = 103
+	ClientMessageId_CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT    ClientMessageId = 104
 	ClientMessageId_CLIENT_MESSAGE_ID_ERROR_RESPONSE         ClientMessageId = 900
 )
 
@@ -44,6 +45,7 @@ var (
 		101: "CLIENT_MESSAGE_ID_LOGIN_RESPONSE",
 		102: "CLIENT_MESSAGE_ID_RESUME_RESPONSE",
 		103: "CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE",
+		104: "CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT",
 		900: "CLIENT_MESSAGE_ID_ERROR_RESPONSE",
 	}
 	ClientMessageId_value = map[string]int32{
@@ -54,6 +56,7 @@ var (
 		"CLIENT_MESSAGE_ID_LOGIN_RESPONSE":         101,
 		"CLIENT_MESSAGE_ID_RESUME_RESPONSE":        102,
 		"CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE": 103,
+		"CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT":    104,
 		"CLIENT_MESSAGE_ID_ERROR_RESPONSE":         900,
 	}
 )
@@ -706,6 +709,82 @@ func (x *ErrorResponse) GetMessage() string {
 	return ""
 }
 
+type StateRestoreEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Service       string                 `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
+	PlayerId      string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	StateVersion  uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
+	Snapshot      []byte                 `protobuf:"bytes,4,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	Available     bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StateRestoreEvent) Reset() {
+	*x = StateRestoreEvent{}
+	mi := &file_client_gateway_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StateRestoreEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StateRestoreEvent) ProtoMessage() {}
+
+func (x *StateRestoreEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_client_gateway_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StateRestoreEvent.ProtoReflect.Descriptor instead.
+func (*StateRestoreEvent) Descriptor() ([]byte, []int) {
+	return file_client_gateway_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *StateRestoreEvent) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *StateRestoreEvent) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *StateRestoreEvent) GetStateVersion() uint64 {
+	if x != nil {
+		return x.StateVersion
+	}
+	return 0
+}
+
+func (x *StateRestoreEvent) GetSnapshot() []byte {
+	if x != nil {
+		return x.Snapshot
+	}
+	return nil
+}
+
+func (x *StateRestoreEvent) GetAvailable() bool {
+	if x != nil {
+		return x.Available
+	}
+	return false
+}
+
 var File_client_gateway_proto protoreflect.FileDescriptor
 
 const file_client_gateway_proto_rawDesc = "" +
@@ -766,7 +845,13 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\tplayer_id\x18\x05 \x01(\tR\bplayerId\"=\n" +
 	"\rErrorResponse\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\rR\x04code\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage*\xce\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xa9\x01\n" +
+	"\x11StateRestoreEvent\x12\x18\n" +
+	"\aservice\x18\x01 \x01(\tR\aservice\x12\x1b\n" +
+	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12#\n" +
+	"\rstate_version\x18\x03 \x01(\x04R\fstateVersion\x12\x1a\n" +
+	"\bsnapshot\x18\x04 \x01(\fR\bsnapshot\x12\x1c\n" +
+	"\tavailable\x18\x05 \x01(\bR\tavailable*\xf9\x02\n" +
 	"\x0fClientMessageId\x12!\n" +
 	"\x1dCLIENT_MESSAGE_ID_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fCLIENT_MESSAGE_ID_LOGIN_REQUEST\x10\x01\x12$\n" +
@@ -774,7 +859,8 @@ const file_client_gateway_proto_rawDesc = "" +
 	"'CLIENT_MESSAGE_ID_REFRESH_LOGIN_REQUEST\x10\x03\x12$\n" +
 	" CLIENT_MESSAGE_ID_LOGIN_RESPONSE\x10e\x12%\n" +
 	"!CLIENT_MESSAGE_ID_RESUME_RESPONSE\x10f\x12,\n" +
-	"(CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE\x10g\x12%\n" +
+	"(CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE\x10g\x12)\n" +
+	"%CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT\x10h\x12%\n" +
 	" CLIENT_MESSAGE_ID_ERROR_RESPONSE\x10\x84\a*\xc8\x01\n" +
 	"\fAuthProvider\x12\x1d\n" +
 	"\x19AUTH_PROVIDER_UNSPECIFIED\x10\x00\x12\x17\n" +
@@ -798,7 +884,7 @@ func file_client_gateway_proto_rawDescGZIP() []byte {
 }
 
 var file_client_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_client_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_client_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_client_gateway_proto_goTypes = []any{
 	(ClientMessageId)(0),         // 0: game01.client.gateway.ClientMessageId
 	(AuthProvider)(0),            // 1: game01.client.gateway.AuthProvider
@@ -810,6 +896,7 @@ var file_client_gateway_proto_goTypes = []any{
 	(*ResumeRequest)(nil),        // 7: game01.client.gateway.ResumeRequest
 	(*ResumeResponse)(nil),       // 8: game01.client.gateway.ResumeResponse
 	(*ErrorResponse)(nil),        // 9: game01.client.gateway.ErrorResponse
+	(*StateRestoreEvent)(nil),    // 10: game01.client.gateway.StateRestoreEvent
 }
 var file_client_gateway_proto_depIdxs = []int32{
 	0, // 0: game01.client.gateway.Envelope.message_id:type_name -> game01.client.gateway.ClientMessageId
@@ -832,7 +919,7 @@ func file_client_gateway_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_client_gateway_proto_rawDesc), len(file_client_gateway_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

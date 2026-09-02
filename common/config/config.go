@@ -45,10 +45,15 @@ type GRPCConfig struct {
 }
 
 type GatewayConfig struct {
-	SessionTTL        time.Duration `yaml:"session_ttl"`
-	ReconnectGrace    time.Duration `yaml:"reconnect_grace_period"`
-	HeartbeatInterval time.Duration `yaml:"heartbeat_interval"`
-	HeartbeatTimeout  time.Duration `yaml:"heartbeat_timeout"`
+	SessionTTL         time.Duration `yaml:"session_ttl"`
+	ReconnectGrace     time.Duration `yaml:"reconnect_grace_period"`
+	HeartbeatInterval  time.Duration `yaml:"heartbeat_interval"`
+	HeartbeatTimeout   time.Duration `yaml:"heartbeat_timeout"`
+	RateLimitBurst     int           `yaml:"rate_limit_burst"`
+	RateLimitPerSecond float64       `yaml:"rate_limit_per_second"`
+	RetryAttempts      int           `yaml:"retry_attempts"`
+	CircuitFailures    int           `yaml:"circuit_failures"`
+	CircuitReset       time.Duration `yaml:"circuit_reset_timeout"`
 }
 
 type UserCenterConfig struct {
@@ -97,7 +102,7 @@ func Defaults() Config {
 		App:         AppConfig{"game-server", "game-server-local", "local", 15 * time.Second},
 		HTTP:        HTTPConfig{":8080", 10 * time.Second, 10 * time.Second},
 		GRPC:        GRPCConfig{":9090", "127.0.0.1:9090"},
-		Gateway:     GatewayConfig{24 * time.Hour, 30 * time.Second, 10 * time.Second, 30 * time.Second},
+		Gateway:     GatewayConfig{24 * time.Hour, 30 * time.Second, 10 * time.Second, 30 * time.Second, 30, 10, 3, 3, 5 * time.Second},
 		UserCenter:  UserCenterConfig{30 * 24 * time.Hour, 24 * time.Hour},
 		Redis:       RedisConfig{"127.0.0.1:6379", "", 0},
 		Mongo:       MongoConfig{"mongodb://127.0.0.1:27017", "game01", 5 * time.Second, "", "", "", ""},
@@ -142,6 +147,9 @@ func Validate(c Config) error {
 	}
 	if c.Gateway.SessionTTL <= 0 || c.Gateway.ReconnectGrace <= 0 || c.Gateway.HeartbeatInterval <= 0 || c.Gateway.HeartbeatTimeout <= 0 {
 		return errors.New("gateway session and heartbeat durations must be positive")
+	}
+	if c.Gateway.RateLimitBurst <= 0 || c.Gateway.RateLimitPerSecond <= 0 || c.Gateway.RetryAttempts <= 0 || c.Gateway.CircuitFailures <= 0 || c.Gateway.CircuitReset <= 0 {
+		return errors.New("gateway reliability settings must be positive")
 	}
 	if c.UserCenter.RefreshTokenTTL <= 0 || c.UserCenter.IdempotencyTTL <= 0 {
 		return errors.New("usercenter.refresh_token_ttl and usercenter.idempotency_ttl must be positive")

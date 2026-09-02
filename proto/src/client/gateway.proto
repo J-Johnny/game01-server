@@ -13,6 +13,7 @@ enum ClientMessageId {
   CLIENT_MESSAGE_ID_LOGIN_RESPONSE = 101;
   CLIENT_MESSAGE_ID_RESUME_RESPONSE = 102;
   CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE = 103;
+  CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT = 104;
   CLIENT_MESSAGE_ID_ERROR_RESPONSE = 900;
 }
 
@@ -82,4 +83,12 @@ message ResumeResponse {
 message ErrorResponse {
   uint32 code = 1;
   string message = 2;
+}
+
+message StateRestoreEvent {
+  string service = 1;
+  string player_id = 2;
+  uint64 state_version = 3;
+  bytes snapshot = 4;
+  bool available = 5;
 }

@@ -7,19 +7,28 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	"server/common/reliability"
 	"server/common/streaming"
 	gatewaypb "server/proto/gen/client"
 	internalpb "server/proto/gen/internalpb"
 )
 
 type UserCenterAuthenticator struct {
-	client func() (*streaming.Client, bool)
+	client  func() (*streaming.Client, bool)
+	retry   reliability.RetryPolicy
+	breaker *reliability.CircuitBreaker
 }
 
 func NewUserCenterAuthenticator(client func() (*streaming.Client, bool)) *UserCenterAuthenticator {
 	return &UserCenterAuthenticator{
 		client: client,
+		retry:  reliability.RetryPolicy{MaxAttempts: 1},
 	}
+}
+
+func (a *UserCenterAuthenticator) SetReliability(retry reliability.RetryPolicy, breaker *reliability.CircuitBreaker) {
+	a.retry = retry
+	a.breaker = breaker
 }
 
 func (a *UserCenterAuthenticator) Authenticate(ctx context.Context, provider gatewaypb.AuthProvider, _, installID, idempotencyKey string) (Authentication, error) {
@@ -103,9 +112,26 @@ func (a *UserCenterAuthenticator) request(ctx context.Context, messageID uint32,
 	if !ok || client == nil {
 		return nil, errors.New("user center service is unavailable")
 	}
-	response, err := client.Request(ctx, &internalpb.InternalEnvelope{TargetService: internalpb.ServiceType_SERVICE_TYPE_USERCENTER, MessageId: messageID, Payload: payload})
+	var response *internalpb.InternalEnvelope
+	request := func(requestContext context.Context) error {
+		var requestErr error
+		response, requestErr = client.Request(requestContext, &internalpb.InternalEnvelope{TargetService: internalpb.ServiceType_SERVICE_TYPE_USERCENTER, MessageId: messageID, Payload: payload})
+		if requestErr != nil {
+			return fmt.Errorf("user center request: %w", requestErr)
+		}
+		return nil
+	}
+	operation := func() error { return a.retry.Do(ctx, request) }
+	var err error
+	if a.breaker != nil {
+		err = a.breaker.ExecuteClassified(operation, func(candidate error) bool {
+			return errors.Is(candidate, streaming.ErrConnectionClosed) || errors.Is(candidate, streaming.ErrRequestTimeout)
+		})
+	} else {
+		err = operation()
+	}
 	if err != nil {
-		return nil, fmt.Errorf("user center request: %w", err)
+		return nil, err
 	}
 	if response.Kind == internalpb.EnvelopeKind_ENVELOPE_KIND_ERROR {
 		return nil, fmt.Errorf("user center error %d: %s", response.ErrorCode, response.ErrorMessage)

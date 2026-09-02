@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 
+	redis "github.com/redis/go-redis/v9"
 	"server/common/app"
 	"server/common/streaming"
 	internalpb "server/proto/gen/internalpb"
@@ -42,6 +43,10 @@ func (m *Module) Stop(context.Context) error {
 
 func (m *Module) Client(service string) (*streaming.Client, bool) {
 	return m.streaming.AnyClient(service)
+}
+
+func (m *Module) Redis() *redis.Client {
+	return m.deps.Redis
 }
 
 func (m *Module) RegisterInternal(router *streaming.Router) {

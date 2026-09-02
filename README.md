@@ -33,6 +33,8 @@ server/
 
 `common/` 不存放大厅、战斗或用户中心的具体业务规则，也不反向依赖 `services/`。
 
+`common/reliability` 提供指数退避重试、令牌桶限流和可分类熔断器。Gateway 已将其用于 WebSocket 请求限流和 UserCenter 认证 Streaming 调用；只有连接关闭、超时等基础设施错误会触发重试/熔断。
+
 ### services
 
 `services/` 按业务服务模块划分。唯一的 `main.go` 显式组装模块，并由 `services.<name>.enabled` 决定本进程实际启动的模块。每个模块保持独立的路由注册、生命周期与领域边界；Docker Compose 已按同一可执行文件、不同角色配置拆分部署。
@@ -93,15 +95,33 @@ mongosh "mongodb://localhost:27017/game01" scripts/drop-legacy-usercenter-collec
 docker compose up --build
 ```
 
-本地 Compose 会启动 `gateway`、`usercenter`、`lobby`、`battle`、Redis、单节点 MongoDB Replica Set 与 etcd。`mongo-rs-init` 负责一次性初始化 `rs0`，四个业务容器等待初始化成功后再启动；四个业务容器使用同一镜像，通过各自的 `config.<role>.yaml` 启动；仅 Gateway 映射宿主机 `8080`，客户端访问 `http://localhost:8080/ws`。所有服务的健康检查地址为 `/healthz`，Gateway 的 `/ping` 继续保留兼容性。镜像使用多阶段构建，运行阶段以非 root 用户 `game` 启动。
+本地 Compose 会定义 Nginx、两个 Gateway 实例、`usercenter`、`lobby`、`battle`、Redis、单节点 MongoDB Replica Set 与 etcd。按需指定服务名即可只启动测试所需角色；`mongo-rs-init` 负责一次性初始化 `rs0`，业务容器等待初始化成功后再启动。四个业务容器使用同一镜像，通过各自的 `config.<role>.yaml` 启动。默认由 Compose 启动 Nginx，并使用 `least_conn` 将新 WebSocket 连接分配到 `gateway` 和 `gateway-2`，客户端统一访问 `ws://localhost:8080/ws`。本地 Nginx 是可选开发模式：两个 Gateway 映射到宿主机 `18081/18082`，由 `code/nginx-1.31.4` 转发。所有服务的健康检查地址为 `/healthz`，Gateway 额外提供 `/readyz` 并继续保留 `/ping` 兼容性。镜像使用多阶段构建，运行阶段以非 root 用户 `game` 启动。
 
 Compose 中 etcd 的客户端和 peer 广播地址使用服务名 `etcd`，不能使用 `0.0.0.0`，否则 etcd 客户端会被引导到不可连接的地址。
 
 ```powershell
 docker compose up --build -d
 docker compose ps
-docker compose logs -f gateway usercenter
+docker compose logs -f gateway gateway-2 usercenter
 ```
+
+多实例测试入口（默认使用 Compose Nginx）：
+
+```powershell
+docker compose up --build -d nginx gateway gateway-2 usercenter redis mongo etcd
+```
+
+容器化 Nginx 配置位于 `nginx/nginx.conf`，默认随 Compose 启动；本地 Nginx 配置位于 `../nginx-1.31.4/conf/nginx.conf`。切换到本地 Nginx 前先停止 Compose 的 `nginx` 容器，并启动两个 Gateway：
+
+```powershell
+docker compose stop nginx
+docker compose up -d gateway gateway-2
+cd ..\nginx-1.31.4
+.\nginx.exe -t
+.\nginx.exe
+```
+
+重载配置使用 `.\nginx.exe -s reload`，停止使用 `.\nginx.exe -s stop`。切回 Compose Nginx 时先执行 `.\nginx.exe -s stop`，再执行 `docker compose up -d nginx gateway gateway-2`。开源 Nginx 使用连接失败后的被动摘除；生产环境可将同一入口替换为云负载均衡器，并启用 `/readyz` 主动健康检查。已建立的 WebSocket 不会迁移，Gateway 故障后由客户端重连并执行 Resume/Refresh。
 
 运行真实 MongoDB Replica Set 集成测试（需要先启动 Compose 的 `mongo` 和 `mongo-rs-init`）：
 
@@ -125,7 +145,9 @@ docker compose down --remove-orphans
 docker compose up --build --force-recreate -d gateway usercenter
 ```
 
-默认 Gateway 地址为 `http://localhost:8080`，也可以通过 `GAME_GATEWAY_HTTP_PORT` 修改宿主机端口。
+默认 Gateway 入口地址为 `http://localhost:8080`，WebSocket 地址为 `ws://localhost:8080/ws`，也可以通过 `GAME_GATEWAY_HTTP_PORT` 修改 Compose Nginx 宿主机端口。使用本地 Nginx 时，Gateway 后端端口由 `GAME_GATEWAY_BACKEND_1_PORT`（默认 `18081`）和 `GAME_GATEWAY_BACKEND_2_PORT`（默认 `18082`）控制，仅用于本机反向代理，不应在生产环境直接暴露。
+
+Gateway 可靠性配置位于 `gateway` 配置段：`rate_limit_burst`、`rate_limit_per_second`、`retry_attempts`、`circuit_failures` 和 `circuit_reset_timeout`。
 
 ### Production
 

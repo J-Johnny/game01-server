@@ -24,22 +24,28 @@ const (
 type InternalMessageId int32
 
 const (
-	InternalMessageId_INTERNAL_MESSAGE_ID_UNSPECIFIED             InternalMessageId = 0
-	InternalMessageId_INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST  InternalMessageId = 1
-	InternalMessageId_INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE InternalMessageId = 101
+	InternalMessageId_INTERNAL_MESSAGE_ID_UNSPECIFIED                   InternalMessageId = 0
+	InternalMessageId_INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST        InternalMessageId = 1
+	InternalMessageId_INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE       InternalMessageId = 101
+	InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST  InternalMessageId = 2001
+	InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE InternalMessageId = 2101
 )
 
 // Enum value maps for InternalMessageId.
 var (
 	InternalMessageId_name = map[int32]string{
-		0:   "INTERNAL_MESSAGE_ID_UNSPECIFIED",
-		1:   "INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST",
-		101: "INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE",
+		0:    "INTERNAL_MESSAGE_ID_UNSPECIFIED",
+		1:    "INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST",
+		101:  "INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE",
+		2001: "INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST",
+		2101: "INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE",
 	}
 	InternalMessageId_value = map[string]int32{
-		"INTERNAL_MESSAGE_ID_UNSPECIFIED":             0,
-		"INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST":  1,
-		"INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE": 101,
+		"INTERNAL_MESSAGE_ID_UNSPECIFIED":                   0,
+		"INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST":        1,
+		"INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE":       101,
+		"INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST":  2001,
+		"INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE": 2101,
 	}
 )
 
@@ -166,6 +172,134 @@ func (x *ServiceStatusResponse) GetAvailable() bool {
 	return false
 }
 
+type RestorePlayerStateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RestorePlayerStateRequest) Reset() {
+	*x = RestorePlayerStateRequest{}
+	mi := &file_internal_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RestorePlayerStateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RestorePlayerStateRequest) ProtoMessage() {}
+
+func (x *RestorePlayerStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RestorePlayerStateRequest.ProtoReflect.Descriptor instead.
+func (*RestorePlayerStateRequest) Descriptor() ([]byte, []int) {
+	return file_internal_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RestorePlayerStateRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *RestorePlayerStateRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type RestorePlayerStateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServiceType   ServiceType            `protobuf:"varint,1,opt,name=service_type,json=serviceType,proto3,enum=game01.internal.ServiceType" json:"service_type,omitempty"`
+	PlayerId      string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	StateVersion  uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
+	Snapshot      []byte                 `protobuf:"bytes,4,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+	Available     bool                   `protobuf:"varint,5,opt,name=available,proto3" json:"available,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RestorePlayerStateResponse) Reset() {
+	*x = RestorePlayerStateResponse{}
+	mi := &file_internal_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RestorePlayerStateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RestorePlayerStateResponse) ProtoMessage() {}
+
+func (x *RestorePlayerStateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RestorePlayerStateResponse.ProtoReflect.Descriptor instead.
+func (*RestorePlayerStateResponse) Descriptor() ([]byte, []int) {
+	return file_internal_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RestorePlayerStateResponse) GetServiceType() ServiceType {
+	if x != nil {
+		return x.ServiceType
+	}
+	return ServiceType_SERVICE_TYPE_UNSPECIFIED
+}
+
+func (x *RestorePlayerStateResponse) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *RestorePlayerStateResponse) GetStateVersion() uint64 {
+	if x != nil {
+		return x.StateVersion
+	}
+	return 0
+}
+
+func (x *RestorePlayerStateResponse) GetSnapshot() []byte {
+	if x != nil {
+		return x.Snapshot
+	}
+	return nil
+}
+
+func (x *RestorePlayerStateResponse) GetAvailable() bool {
+	if x != nil {
+		return x.Available
+	}
+	return false
+}
+
 var File_internal_service_proto protoreflect.FileDescriptor
 
 const file_internal_service_proto_rawDesc = "" +
@@ -176,11 +310,23 @@ const file_internal_service_proto_rawDesc = "" +
 	"\fservice_type\x18\x01 \x01(\x0e2\x1c.game01.internal.ServiceTypeR\vserviceType\x12\x1f\n" +
 	"\vinstance_id\x18\x02 \x01(\tR\n" +
 	"instanceId\x12\x1c\n" +
-	"\tavailable\x18\x03 \x01(\bR\tavailable*\x99\x01\n" +
+	"\tavailable\x18\x03 \x01(\bR\tavailable\"W\n" +
+	"\x19RestorePlayerStateRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\"\xd9\x01\n" +
+	"\x1aRestorePlayerStateResponse\x12?\n" +
+	"\fservice_type\x18\x01 \x01(\x0e2\x1c.game01.internal.ServiceTypeR\vserviceType\x12\x1b\n" +
+	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12#\n" +
+	"\rstate_version\x18\x03 \x01(\x04R\fstateVersion\x12\x1a\n" +
+	"\bsnapshot\x18\x04 \x01(\fR\bsnapshot\x12\x1c\n" +
+	"\tavailable\x18\x05 \x01(\bR\tavailable*\x88\x02\n" +
 	"\x11InternalMessageId\x12#\n" +
 	"\x1fINTERNAL_MESSAGE_ID_UNSPECIFIED\x10\x00\x12.\n" +
 	"*INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST\x10\x01\x12/\n" +
-	"+INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE\x10eB(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
+	"+INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE\x10e\x125\n" +
+	"0INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST\x10\xd1\x0f\x126\n" +
+	"1INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE\x10\xb5\x10B(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
 
 var (
 	file_internal_service_proto_rawDescOnce sync.Once
@@ -195,20 +341,23 @@ func file_internal_service_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_service_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_internal_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_internal_service_proto_goTypes = []any{
-	(InternalMessageId)(0),        // 0: game01.internal.InternalMessageId
-	(*ServiceStatusRequest)(nil),  // 1: game01.internal.ServiceStatusRequest
-	(*ServiceStatusResponse)(nil), // 2: game01.internal.ServiceStatusResponse
-	(ServiceType)(0),              // 3: game01.internal.ServiceType
+	(InternalMessageId)(0),             // 0: game01.internal.InternalMessageId
+	(*ServiceStatusRequest)(nil),       // 1: game01.internal.ServiceStatusRequest
+	(*ServiceStatusResponse)(nil),      // 2: game01.internal.ServiceStatusResponse
+	(*RestorePlayerStateRequest)(nil),  // 3: game01.internal.RestorePlayerStateRequest
+	(*RestorePlayerStateResponse)(nil), // 4: game01.internal.RestorePlayerStateResponse
+	(ServiceType)(0),                   // 5: game01.internal.ServiceType
 }
 var file_internal_service_proto_depIdxs = []int32{
-	3, // 0: game01.internal.ServiceStatusResponse.service_type:type_name -> game01.internal.ServiceType
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 0: game01.internal.ServiceStatusResponse.service_type:type_name -> game01.internal.ServiceType
+	5, // 1: game01.internal.RestorePlayerStateResponse.service_type:type_name -> game01.internal.ServiceType
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_internal_service_proto_init() }
@@ -223,7 +372,7 @@ func file_internal_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_service_proto_rawDesc), len(file_internal_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

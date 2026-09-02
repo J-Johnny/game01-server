@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"server/common/reliability"
 	"server/services/gateway/session"
 )
 
@@ -31,14 +32,16 @@ func (f DispatcherFunc) Dispatch(ctx context.Context, c *Connection, payload []b
 }
 
 type Connection struct {
-	ID        string
-	ws        *websocket.Conn
-	send      chan []byte
-	done      chan struct{}
-	closeOnce sync.Once
-	mu        sync.RWMutex
-	closed    bool
-	sessionID string
+	ID           string
+	ws           *websocket.Conn
+	send         chan []byte
+	done         chan struct{}
+	closeOnce    sync.Once
+	mu           sync.RWMutex
+	closed       bool
+	sessionID    string
+	sessionEpoch uint64
+	rateLimiter  *reliability.TokenBucket
 }
 
 func (c *Connection) Send(payload []byte) error {
@@ -65,10 +68,13 @@ func (c *Connection) Close() {
 	})
 }
 
-func (c *Connection) BindSession(sessionID string) {
+func (c *Connection) BindSession(sessionID string, epochs ...uint64) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.sessionID = sessionID
+	if len(epochs) > 0 {
+		c.sessionEpoch = epochs[0]
+	}
 }
 
 func (c *Connection) SessionID() string {
@@ -77,11 +83,20 @@ func (c *Connection) SessionID() string {
 	return c.sessionID
 }
 
+func (c *Connection) SessionEpoch() uint64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.sessionEpoch
+}
+
 type Handler struct {
 	upgrader       websocket.Upgrader
 	dispatch       MessageDispatcher
 	sessionManager *session.Manager
+	accepting      func() bool
 	connections    sync.Map
+	rateLimitBurst int
+	rateLimitRate  float64
 }
 
 func NewHandler(dispatch MessageDispatcher, sessionManagers ...*session.Manager) *Handler {
@@ -96,23 +111,39 @@ func NewHandler(dispatch MessageDispatcher, sessionManagers ...*session.Manager)
 	if len(sessionManagers) > 0 {
 		handler.sessionManager = sessionManagers[0]
 	}
+	handler.rateLimitBurst = 30
+	handler.rateLimitRate = 10
 	return handler
+}
+
+func (h *Handler) SetRateLimit(burst int, perSecond float64) {
+	h.rateLimitBurst = burst
+	h.rateLimitRate = perSecond
 }
 
 func (h *Handler) RegisterRoutes(r gin.IRouter) {
 	r.GET("/ws", h.Handle)
 }
 
+func (h *Handler) SetAccepting(check func() bool) {
+	h.accepting = check
+}
+
 func (h *Handler) Handle(c *gin.Context) {
+	if h.accepting != nil && !h.accepting() {
+		c.Status(http.StatusServiceUnavailable)
+		return
+	}
 	ws, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
 	}
 	ws.SetReadLimit(maxMessageSize)
 	conn := &Connection{
-		ws:   ws,
-		send: make(chan []byte, 64),
-		done: make(chan struct{}),
+		ws:          ws,
+		send:        make(chan []byte, 64),
+		done:        make(chan struct{}),
+		rateLimiter: reliability.NewTokenBucket(h.rateLimitBurst, h.rateLimitRate),
 	}
 	connectionID, err := newConnectionID()
 	if err != nil {
@@ -141,7 +172,7 @@ func (h *Handler) disconnectSession(conn *Connection) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	if err := h.sessionManager.DisconnectConnection(ctx, sessionID, conn.ID, time.Now()); err != nil {
+	if err := h.sessionManager.DisconnectConnection(ctx, sessionID, conn.ID, time.Now(), conn.SessionEpoch()); err != nil {
 		slog.Warn("disconnect websocket session failed", "protocol", "websocket", "connection_id", conn.ID, "session_id", sessionID, "error", err)
 	}
 }
@@ -164,6 +195,10 @@ func (h *Handler) readPump(ctx context.Context, conn *Connection) {
 		}
 		if messageType != websocket.BinaryMessage {
 			return
+		}
+		if conn.rateLimiter != nil && !conn.rateLimiter.Allow() {
+			slog.Warn("websocket request rate limited", "protocol", "websocket", "connection_id", conn.ID)
+			continue
 		}
 		if h.dispatch != nil {
 			if err := h.dispatch.Dispatch(ctx, conn, payload); err != nil {
