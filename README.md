@@ -75,7 +75,15 @@ common     -X-> services/*
 
 Redis 由 `common/redis` 统一创建并注入依赖，Gateway 会话存储使用 `services/gateway/session.RedisStore`。本地 Compose 会自动启动 Redis，并通过 `GAME_REDIS_ADDR` 指向容器服务。
 
-MongoDB 由 `common/mongodb` 统一创建并注入依赖，底层使用 Qmgo（`github.com/qiniu/qmgo`）。UserCenter 的 `usercenter_accounts` 集合保存账号 UUID、认证身份、`account_id -> player_id` 关联和 Refresh Token 哈希；启动时会创建账号、认证身份、玩家关联和令牌查询索引。玩家档案、资产及结算数据应由 Lobby 的独立集合管理。
+MongoDB 由 `common/mongodb` 统一创建并注入依赖。UserCenter 运行时使用官方 MongoDB Driver，通过领域 Repository 写入 `accounts`、`account_identities`、`refresh_tokens` 和 `idempotency_records` 独立集合；玩家档案、资产及结算数据应由 Lobby 的独立集合管理。Qmgo、旧模型和旧 Repository 已从运行时代码删除，不做历史数据迁移。旧 `user_center` 集合需要由运维人员显式执行一次性脚本删除，服务启动不会自动删库。
+
+删除旧 UserCenter 集合（执行前请确认 URI 和数据库）：
+
+```powershell
+mongosh "mongodb://localhost:27017/game01" scripts/drop-legacy-usercenter-collection.js
+```
+
+脚本只删除 `user_center`，不会删除 `accounts`、`account_identities`、`refresh_tokens` 或 `idempotency_records`。
 
 ## Docker
 
@@ -85,7 +93,7 @@ MongoDB 由 `common/mongodb` 统一创建并注入依赖，底层使用 Qmgo（`
 docker compose up --build
 ```
 
-本地 Compose 会启动 `gateway`、`usercenter`、`lobby`、`battle`、Redis、MongoDB 与 etcd。四个业务容器使用同一镜像，通过各自的 `config.<role>.yaml` 启动；仅 Gateway 映射宿主机 `8080`，客户端访问 `http://localhost:8080/ws`。所有服务的健康检查地址为 `/healthz`，Gateway 的 `/ping` 继续保留兼容性。镜像使用多阶段构建，运行阶段以非 root 用户 `game` 启动。
+本地 Compose 会启动 `gateway`、`usercenter`、`lobby`、`battle`、Redis、单节点 MongoDB Replica Set 与 etcd。`mongo-rs-init` 负责一次性初始化 `rs0`，四个业务容器等待初始化成功后再启动；四个业务容器使用同一镜像，通过各自的 `config.<role>.yaml` 启动；仅 Gateway 映射宿主机 `8080`，客户端访问 `http://localhost:8080/ws`。所有服务的健康检查地址为 `/healthz`，Gateway 的 `/ping` 继续保留兼容性。镜像使用多阶段构建，运行阶段以非 root 用户 `game` 启动。
 
 Compose 中 etcd 的客户端和 peer 广播地址使用服务名 `etcd`，不能使用 `0.0.0.0`，否则 etcd 客户端会被引导到不可连接的地址。
 
@@ -93,6 +101,13 @@ Compose 中 etcd 的客户端和 peer 广播地址使用服务名 `etcd`，不�
 docker compose up --build -d
 docker compose ps
 docker compose logs -f gateway usercenter
+```
+
+运行真实 MongoDB Replica Set 集成测试（需要先启动 Compose 的 `mongo` 和 `mongo-rs-init`）：
+
+```powershell
+$env:GAME_MONGO_REPLICA_URI = "mongodb://localhost:27017/?replicaSet=rs0&directConnection=true"
+go test ./services/usercenter/repository/mongo -run ReplicaSet -count=1
 ```
 
 启动日志后台面板（测试 Gateway/UserCenter 时）：
@@ -129,6 +144,8 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 服务使用 JSON `slog` 输出到容器标准输出。Gin HTTP 请求、WebSocket 连接和内部 gRPC Streaming 连接/消息均带有结构化字段，并通过 `X-Request-ID` 关联请求。密码、Refresh Token、Authorization 和完整 Protobuf 内容不会写入日志。
 
 本地观测组件为 Grafana、Loki 和 Grafana Alloy：Alloy 读取 Docker 容器日志并发送到 Loki，Grafana 自动配置 Loki 数据源和 `Game01 Logs` 面板。日志标签只保留低基数字段（服务、环境、协议、级别）；`request_id`、账号和会话字段保留在 JSON 内容中用于查询。
+
+幂等请求在执行期间会自动续租；UserCenter 启动时会清理已过期的 pending 记录，使业务事务已提交但进程在幂等 Complete 前崩溃的请求可以在下一次重试时重新执行并完成幂等记录。
 
 ## Internal gRPC
 

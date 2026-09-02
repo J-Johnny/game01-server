@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"server/common/streaming"
 	internalpb "server/proto/gen/internalpb"
-	"server/services/usercenter/repository/models"
 )
 
 func TestAuthenticationOverGRPCStreaming(t *testing.T) {
@@ -117,7 +116,8 @@ func TestAuthenticationOverGRPCStreaming(t *testing.T) {
 
 func startAuthenticationServer(t *testing.T) (*grpc.Server, string) {
 	t.Helper()
-	auth := NewAuthComponent(&memoryAccountRepository{tokens: make(map[string][]models.RefreshToken)}, time.Hour)
+	store := newDomainAuthMemory()
+	auth := NewDomainAuthComponent(store.accounts, store.identities, store.tokens, domainAuthUnitOfWork{}, time.Hour)
 	router := streaming.NewRouter()
 	auth.RegisterInternal(router)
 	grpcServer := grpc.NewServer()

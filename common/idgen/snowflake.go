@@ -41,7 +41,12 @@ func NewWithClock(nodeID uint16, epoch time.Time, now func() time.Time) (*Genera
 	if now == nil {
 		return nil, errors.New("id generator clock is required")
 	}
-	return &Generator{nodeID: nodeID, epochMilli: epoch.UTC().UnixMilli(), now: now, lastMilli: -1}, nil
+	return &Generator{
+		nodeID:     nodeID,
+		epochMilli: epoch.UTC().UnixMilli(),
+		now:        now,
+		lastMilli:  -1,
+	}, nil
 }
 
 func (g *Generator) Next() uint64 {

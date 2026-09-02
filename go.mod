@@ -8,7 +8,6 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/qiniu/qmgo v1.1.8
 	github.com/redis/go-redis/v9 v9.7.0
 	go.etcd.io/etcd/client/v3 v3.5.16
 	go.mongodb.org/mongo-driver v1.11.6

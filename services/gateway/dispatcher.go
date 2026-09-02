@@ -31,12 +31,12 @@ const (
 )
 
 type Authenticator interface {
-	Authenticate(context.Context, gatewaypb.AuthProvider, string, string) (Authentication, error)
-	Refresh(context.Context, string, string) (Authentication, error)
+	Authenticate(context.Context, gatewaypb.AuthProvider, string, string, string) (Authentication, error)
+	Refresh(context.Context, string, string, string) (Authentication, error)
 }
 
 type PasswordAuthenticator interface {
-	AuthenticatePassword(context.Context, string, string, string) (Authentication, error)
+	AuthenticatePassword(context.Context, string, string, string, string) (Authentication, error)
 }
 
 type Authentication struct {
@@ -47,11 +47,11 @@ type Authentication struct {
 
 type RejectingAuthenticator struct{}
 
-func (RejectingAuthenticator) Authenticate(context.Context, gatewaypb.AuthProvider, string, string) (Authentication, error) {
+func (RejectingAuthenticator) Authenticate(context.Context, gatewaypb.AuthProvider, string, string, string) (Authentication, error) {
 	return Authentication{}, errors.New("user center authenticator is not configured")
 }
 
-func (RejectingAuthenticator) Refresh(context.Context, string, string) (Authentication, error) {
+func (RejectingAuthenticator) Refresh(context.Context, string, string, string) (Authentication, error) {
 	return Authentication{}, errors.New("user center authenticator is not configured")
 }
 
@@ -62,7 +62,11 @@ type Dispatcher struct {
 }
 
 func NewDispatcher(authenticator Authenticator, sessions *session.Manager) *Dispatcher {
-	return &Dispatcher{authenticator: authenticator, sessions: sessions, now: time.Now}
+	return &Dispatcher{
+		authenticator: authenticator,
+		sessions:      sessions,
+		now:           time.Now,
+	}
 }
 
 func (d *Dispatcher) Dispatch(ctx context.Context, connection *Connection, data []byte) error {
@@ -107,9 +111,9 @@ func (d *Dispatcher) login(ctx context.Context, connection *Connection, envelope
 		if !ok {
 			return d.sendError(connection, envelope.RequestId, ErrorUnsupported, "password authentication is not enabled")
 		}
-		authentication, err = passwordAuthenticator.AuthenticatePassword(ctx, request.Username, request.Password, request.InstallId)
+		authentication, err = passwordAuthenticator.AuthenticatePassword(ctx, request.Username, request.Password, request.InstallId, request.IdempotencyKey)
 	} else {
-		authentication, err = d.authenticator.Authenticate(ctx, request.Provider, request.Credential, request.InstallId)
+		authentication, err = d.authenticator.Authenticate(ctx, request.Provider, request.Credential, request.InstallId, request.IdempotencyKey)
 	}
 	if err != nil {
 		slog.Warn("gateway authentication failed", "protocol", "websocket", "connection_id", connection.ID, "request_id", envelope.RequestId, "provider", request.Provider.String(), "error", err)
@@ -130,7 +134,7 @@ func (d *Dispatcher) refreshLogin(ctx context.Context, connection *Connection, e
 	if request.RefreshToken == "" || request.InstallId == "" {
 		return d.sendError(connection, envelope.RequestId, ErrorInvalidEnvelope, "refresh token and install id are required")
 	}
-	authentication, err := d.authenticator.Refresh(ctx, request.RefreshToken, request.InstallId)
+	authentication, err := d.authenticator.Refresh(ctx, request.RefreshToken, request.InstallId, request.IdempotencyKey)
 	if err != nil {
 		return d.sendError(connection, envelope.RequestId, ErrorRefresh, "refresh authentication failed")
 	}

@@ -34,7 +34,16 @@ type managedClient struct {
 }
 
 func NewClientManager(registry discovery.Registry, service internalpb.ServiceType, serviceName, instanceID string, onEvent Handler) *ClientManager {
-	return &ClientManager{registry: registry, service: service, serviceName: serviceName, instanceID: instanceID, onEvent: onEvent, dial: defaultDial, known: make(map[string]discovery.Registration), clients: make(map[string]*managedClient)}
+	return &ClientManager{
+		registry:    registry,
+		service:     service,
+		serviceName: serviceName,
+		instanceID:  instanceID,
+		onEvent:     onEvent,
+		dial:        defaultDial,
+		known:       make(map[string]discovery.Registration),
+		clients:     make(map[string]*managedClient),
+	}
 }
 
 func (m *ClientManager) Start(ctx context.Context, targets map[string]internalpb.ServiceType) {
@@ -141,7 +150,11 @@ func (m *ClientManager) connect(ctx context.Context, key string, targetType inte
 		_ = connection.Close()
 		return
 	}
-	m.clients[key] = &managedClient{registration: registration, connection: connection, client: client}
+	m.clients[key] = &managedClient{
+		registration: registration,
+		connection:   connection,
+		client:       client,
+	}
 	m.mu.Unlock()
 	go m.monitor(ctx, key, targetType, registration, client, connection)
 }

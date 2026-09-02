@@ -10,7 +10,9 @@ import (
 type Module struct{ *servicecommon.Module }
 
 func NewModule(deps app.Dependencies) *Module {
-	return &Module{Module: servicecommon.NewModule("lobby", internalpb.ServiceType_SERVICE_TYPE_LOBBY, deps)}
+	return &Module{
+		Module: servicecommon.NewModule("lobby", internalpb.ServiceType_SERVICE_TYPE_LOBBY, deps),
+	}
 }
 
 func (m *Module) RegisterRoutes(gin.IRouter) {}

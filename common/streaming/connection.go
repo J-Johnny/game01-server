@@ -18,7 +18,10 @@ type Connection struct {
 }
 
 func NewConnection(send func(*internalpb.InternalEnvelope) error) *Connection {
-	return &Connection{send: send, done: make(chan struct{})}
+	return &Connection{
+		send: send,
+		done: make(chan struct{}),
+	}
 }
 
 func (c *Connection) Send(envelope *internalpb.InternalEnvelope) error {

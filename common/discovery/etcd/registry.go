@@ -18,7 +18,11 @@ type Registry struct {
 }
 
 func New(client *clientv3.Client, namespace string, leaseTTL int64) *Registry {
-	return &Registry{client: client, namespace: strings.TrimRight(namespace, "/"), leaseTTL: leaseTTL}
+	return &Registry{
+		client:    client,
+		namespace: strings.TrimRight(namespace, "/"),
+		leaseTTL:  leaseTTL,
+	}
 }
 
 func (r *Registry) Register(ctx context.Context, item discovery.Registration) (discovery.CloseFunc, error) {

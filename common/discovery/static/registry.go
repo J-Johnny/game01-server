@@ -16,7 +16,8 @@ type Registry struct {
 func New(items []discovery.Registration) *Registry {
 	r := &Registry{
 		items:   make(map[string]discovery.Registration),
-		watches: make(map[string][]chan discovery.Event)}
+		watches: make(map[string][]chan discovery.Event),
+	}
 	for _, item := range items {
 		r.items[key(item.Service, item.Instance)] = item
 	}

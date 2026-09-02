@@ -32,7 +32,15 @@ func NewClient(ctx context.Context, connection *grpc.ClientConn, service interna
 	if err != nil {
 		return nil, err
 	}
-	client := &Client{connection: connection, stream: stream, service: service, instanceID: instanceID, requests: make(map[uint64]chan *internalpb.InternalEnvelope), done: make(chan struct{}), onEvent: onEvent}
+	client := &Client{
+		connection: connection,
+		stream:     stream,
+		service:    service,
+		instanceID: instanceID,
+		requests:   make(map[uint64]chan *internalpb.InternalEnvelope),
+		done:       make(chan struct{}),
+		onEvent:    onEvent,
+	}
 	if err := client.sendHello(); err != nil {
 		client.Close()
 		return nil, err

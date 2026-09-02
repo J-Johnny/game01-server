@@ -26,3 +26,4 @@ Go 输出位于 `proto/gen/`，其中内部协议包为 `proto/gen/internalpb/`�
 - 内部请求使用 `target_service + message_id` 路由；每个 Handler 的响应必须使用其声明的响应 `message_id`。
 - 第一阶段客户端仅启用 `AUTH_PROVIDER_GUEST`；Steam、Apple、Google、微信枚举仅为未来兼容预留，Gateway 会拒绝尚未启用的 Provider。
 - 业务 `payload` 必须是对应 `message_id` 定义的 Protobuf 消息，不能混用 JSON。
+- 登录、刷新登录及内部认证请求支持可选 `idempotency_key`；同一操作使用相同键和参数时回放首次响应，参数变化会返回幂等冲突。

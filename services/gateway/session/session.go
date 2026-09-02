@@ -51,7 +51,9 @@ type MemoryStore struct {
 }
 
 func NewMemoryStore() *MemoryStore {
-	return &MemoryStore{records: make(map[string]Record)}
+	return &MemoryStore{
+		records: make(map[string]Record),
+	}
 }
 
 func (s *MemoryStore) Create(_ context.Context, r Record) error {
@@ -100,7 +102,13 @@ type Manager struct {
 }
 
 func NewManager(store Store, gatewayID string, sessionTTL, reconnectGrace time.Duration) *Manager {
-	return &Manager{store: store, gatewayID: gatewayID, sessionTTL: sessionTTL, reconnectGrace: reconnectGrace, connections: make(map[string]string)}
+	return &Manager{
+		store:          store,
+		gatewayID:      gatewayID,
+		sessionTTL:     sessionTTL,
+		reconnectGrace: reconnectGrace,
+		connections:    make(map[string]string),
+	}
 }
 
 type Created struct {

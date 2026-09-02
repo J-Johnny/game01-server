@@ -29,7 +29,9 @@ type Router struct {
 }
 
 func NewRouter() *Router {
-	return &Router{handlers: make(map[internalpb.ServiceType]map[uint32]MessageHandler)}
+	return &Router{
+		handlers: make(map[internalpb.ServiceType]map[uint32]MessageHandler),
+	}
 }
 
 func (r *Router) Register(service internalpb.ServiceType, messageID uint32, handler MessageHandler) {

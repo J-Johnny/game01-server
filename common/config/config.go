@@ -53,6 +53,7 @@ type GatewayConfig struct {
 
 type UserCenterConfig struct {
 	RefreshTokenTTL time.Duration `yaml:"refresh_token_ttl"`
+	IdempotencyTTL  time.Duration `yaml:"idempotency_ttl"`
 }
 
 type RedisConfig struct {
@@ -97,7 +98,7 @@ func Defaults() Config {
 		HTTP:        HTTPConfig{":8080", 10 * time.Second, 10 * time.Second},
 		GRPC:        GRPCConfig{":9090", "127.0.0.1:9090"},
 		Gateway:     GatewayConfig{24 * time.Hour, 30 * time.Second, 10 * time.Second, 30 * time.Second},
-		UserCenter:  UserCenterConfig{30 * 24 * time.Hour},
+		UserCenter:  UserCenterConfig{30 * 24 * time.Hour, 24 * time.Hour},
 		Redis:       RedisConfig{"127.0.0.1:6379", "", 0},
 		Mongo:       MongoConfig{"mongodb://127.0.0.1:27017", "game01", 5 * time.Second, "", "", "", ""},
 		Discovery:   DiscoveryConfig{"static", []string{"http://127.0.0.1:2379"}, "/services/game01", 10},
@@ -142,8 +143,8 @@ func Validate(c Config) error {
 	if c.Gateway.SessionTTL <= 0 || c.Gateway.ReconnectGrace <= 0 || c.Gateway.HeartbeatInterval <= 0 || c.Gateway.HeartbeatTimeout <= 0 {
 		return errors.New("gateway session and heartbeat durations must be positive")
 	}
-	if c.UserCenter.RefreshTokenTTL <= 0 {
-		return errors.New("usercenter.refresh_token_ttl must be positive")
+	if c.UserCenter.RefreshTokenTTL <= 0 || c.UserCenter.IdempotencyTTL <= 0 {
+		return errors.New("usercenter.refresh_token_ttl and usercenter.idempotency_ttl must be positive")
 	}
 	if c.Redis.Address == "" {
 		return errors.New("redis.address is required")

@@ -2,10 +2,8 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/http/httptest"
-	"sync"
 	"testing"
 	"time"
 
@@ -19,8 +17,6 @@ import (
 	internalpb "server/proto/gen/internalpb"
 	"server/services/gateway/session"
 	"server/services/usercenter/components"
-	"server/services/usercenter/repository"
-	"server/services/usercenter/repository/models"
 )
 
 func TestPasswordLoginOverWebSocketThroughUserCenterStreaming(t *testing.T) {
@@ -174,8 +170,8 @@ func TestLoginOverWebSocketReturnsAuthenticationError(t *testing.T) {
 
 func startUserCenterForIntegration(t *testing.T) (*grpc.Server, string) {
 	t.Helper()
-	accounts := &integrationAccountRepository{tokens: make(map[string][]models.RefreshToken)}
-	auth := components.NewAuthComponent(accounts, time.Hour)
+	store := newGatewayDomainStore()
+	auth := components.NewDomainAuthComponent(store, &gatewayIdentityStore{store}, &gatewayTokenStore{store}, gatewayDomainUnitOfWork{}, time.Hour)
 	router := streaming.NewRouter()
 	auth.RegisterInternal(router)
 	grpcServer := grpc.NewServer()
@@ -189,113 +185,6 @@ func startUserCenterForIntegration(t *testing.T) (*grpc.Server, string) {
 	return grpcServer, listener.Addr().String()
 }
 
-type integrationAccountRepository struct {
-	mu       sync.Mutex
-	accounts []models.Account
-	tokens   map[string][]models.RefreshToken
-}
-
-func (r *integrationAccountRepository) EnsureIndexes(context.Context) error { return nil }
-
-func (r *integrationAccountRepository) Create(_ context.Context, account *models.Account) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, existing := range r.accounts {
-		if existing.AccountID == account.AccountID {
-			return errors.New("duplicate account")
-		}
-	}
-	r.accounts = append(r.accounts, *account)
-	return nil
-}
-
-func (r *integrationAccountRepository) FindByID(_ context.Context, accountID string) (models.Account, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, account := range r.accounts {
-		if account.AccountID == accountID {
-			return account, nil
-		}
-	}
-	return models.Account{}, models.ErrAccountNotFound
-}
-
-func (r *integrationAccountRepository) FindByIdentity(_ context.Context, provider models.AuthProvider, subject string) (models.Account, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, account := range r.accounts {
-		if account.Identities == nil || account.Identities.Data() == nil || account.Identities.Data().Rows == nil {
-			continue
-		}
-		for _, identity := range account.Identities.Data().Rows.GetValueSlice() {
-			if identity != nil && identity.Provider == provider && identity.Subject == subject {
-				return account, nil
-			}
-		}
-	}
-	return models.Account{}, models.ErrAccountNotFound
-}
-
-func (r *integrationAccountRepository) FindByRefreshTokenHash(_ context.Context, tokenHash string, now time.Time) (models.Account, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, account := range r.accounts {
-		for _, token := range r.tokens[account.AccountID] {
-			if token.TokenHash == tokenHash && token.RevokedAt == nil && now.Before(token.ExpiresAt) {
-				return account, nil
-			}
-		}
-	}
-	return models.Account{}, models.ErrAccountNotFound
-}
-
-func (r *integrationAccountRepository) LinkPlayer(context.Context, string, string, time.Time) error {
-	return nil
-}
-
-func (r *integrationAccountRepository) StoreRefreshToken(_ context.Context, accountID string, token models.RefreshToken, _ time.Time) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, account := range r.accounts {
-		if account.AccountID == accountID {
-			r.tokens[accountID] = append(r.tokens[accountID], token)
-			return nil
-		}
-	}
-	return models.ErrAccountNotFound
-}
-
-func (r *integrationAccountRepository) RevokeRefreshToken(_ context.Context, accountID, tokenHash string, now time.Time) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for index := range r.tokens[accountID] {
-		if r.tokens[accountID][index].TokenHash == tokenHash {
-			r.tokens[accountID][index].RevokedAt = &now
-			return nil
-		}
-	}
-	return models.ErrAccountNotFound
-}
-
-func (r *integrationAccountRepository) RotateRefreshToken(_ context.Context, accountID, tokenHash, installID string, now time.Time, replacement models.RefreshToken) (models.Account, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, account := range r.accounts {
-		if account.AccountID != accountID {
-			continue
-		}
-		for index := range r.tokens[accountID] {
-			token := &r.tokens[accountID][index]
-			if token.TokenHash == tokenHash && token.InstallID == installID && token.RevokedAt == nil && now.Before(token.ExpiresAt) {
-				token.RevokedAt = &now
-				r.tokens[accountID] = append(r.tokens[accountID], replacement)
-				return account, nil
-			}
-		}
-	}
-	return models.Account{}, models.ErrAccountNotFound
-}
-
 func gatewayLoginRequestGuest(installID string) gatewaypb.LoginRequest {
 	return gatewaypb.LoginRequest{Provider: gatewaypb.AuthProvider_AUTH_PROVIDER_GUEST, InstallId: installID}
 }
@@ -303,5 +192,3 @@ func gatewayLoginRequestGuest(installID string) gatewaypb.LoginRequest {
 func gatewayEnvelopeLogin(payload []byte, requestID uint64) gatewaypb.Envelope {
 	return gatewaypb.Envelope{MessageId: MessageLoginRequest, RequestId: requestID, Payload: payload}
 }
-
-var _ repository.IAccountRepository = (*integrationAccountRepository)(nil)

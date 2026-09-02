@@ -25,7 +25,10 @@ func NewModule(deps app.Dependencies) *Module {
 		return base.Client("usercenter")
 	})
 	dispatcher := NewDispatcher(authenticator, manager)
-	return &Module{Module: base, handler: NewHandler(dispatcher)}
+	return &Module{
+		Module:  base,
+		handler: NewHandler(dispatcher),
+	}
 }
 
 func (m *Module) RegisterRoutes(router gin.IRouter) {

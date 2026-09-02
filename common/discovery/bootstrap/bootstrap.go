@@ -19,7 +19,10 @@ type Resources struct {
 
 func Open(ctx context.Context, cfg config.DiscoveryConfig) (Resources, error) {
 	if cfg.Provider == "static" {
-		return Resources{Registry: static.New(nil), Close: func() error { return nil }}, nil
+		return Resources{
+			Registry: static.New(nil),
+			Close:    func() error { return nil },
+		}, nil
 	}
 	client, err := clientv3.New(clientv3.Config{Endpoints: cfg.Endpoints, DialTimeout: 5 * time.Second})
 	if err != nil {
@@ -31,5 +34,8 @@ func Open(ctx context.Context, cfg config.DiscoveryConfig) (Resources, error) {
 		_ = client.Close()
 		return Resources{}, fmt.Errorf("sync etcd endpoints: %w", err)
 	}
-	return Resources{Registry: etcdregistry.New(client, cfg.Namespace, cfg.LeaseTTL), Close: client.Close}, nil
+	return Resources{
+		Registry: etcdregistry.New(client, cfg.Namespace, cfg.LeaseTTL),
+		Close:    client.Close,
+	}, nil
 }

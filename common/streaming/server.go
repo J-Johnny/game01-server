@@ -21,7 +21,10 @@ type Server struct {
 }
 
 func NewServer(handler Handler) *Server {
-	return &Server{handler: handler, peers: make(map[string]Peer)}
+	return &Server{
+		handler: handler,
+		peers:   make(map[string]Peer),
+	}
 }
 
 func Register(registrar grpc.ServiceRegistrar, handler Handler) *Server {

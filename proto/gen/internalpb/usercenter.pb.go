@@ -93,6 +93,7 @@ type GuestAuthenticateRequest struct {
 	InstallId      string                 `protobuf:"bytes,1,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
 	ClientPlatform string                 `protobuf:"bytes,2,opt,name=client_platform,json=clientPlatform,proto3" json:"client_platform,omitempty"`
 	ClientVersion  string                 `protobuf:"bytes,3,opt,name=client_version,json=clientVersion,proto3" json:"client_version,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,4,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -144,6 +145,13 @@ func (x *GuestAuthenticateRequest) GetClientPlatform() string {
 func (x *GuestAuthenticateRequest) GetClientVersion() string {
 	if x != nil {
 		return x.ClientVersion
+	}
+	return ""
+}
+
+func (x *GuestAuthenticateRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
 	}
 	return ""
 }
@@ -217,11 +225,12 @@ func (x *GuestAuthenticateResponse) GetCreated() bool {
 }
 
 type RefreshAuthenticateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	InstallId     string                 `protobuf:"bytes,2,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	RefreshToken   string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	InstallId      string                 `protobuf:"bytes,2,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,3,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RefreshAuthenticateRequest) Reset() {
@@ -264,6 +273,13 @@ func (x *RefreshAuthenticateRequest) GetRefreshToken() string {
 func (x *RefreshAuthenticateRequest) GetInstallId() string {
 	if x != nil {
 		return x.InstallId
+	}
+	return ""
+}
+
+func (x *RefreshAuthenticateRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
 	}
 	return ""
 }
@@ -329,11 +345,12 @@ func (x *RefreshAuthenticateResponse) GetRefreshTokenExpireAtUnix() int64 {
 }
 
 type RevokeRefreshTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	RefreshToken  string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AccountId      string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	RefreshToken   string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,3,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RevokeRefreshTokenRequest) Reset() {
@@ -380,6 +397,13 @@ func (x *RevokeRefreshTokenRequest) GetRefreshToken() string {
 	return ""
 }
 
+func (x *RevokeRefreshTokenRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
 type RevokeRefreshTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -417,12 +441,13 @@ func (*RevokeRefreshTokenResponse) Descriptor() ([]byte, []int) {
 }
 
 type PasswordAuthenticateRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	InstallId     string                 `protobuf:"bytes,3,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Username       string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Password       string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	InstallId      string                 `protobuf:"bytes,3,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,4,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *PasswordAuthenticateRequest) Reset() {
@@ -472,6 +497,13 @@ func (x *PasswordAuthenticateRequest) GetPassword() string {
 func (x *PasswordAuthenticateRequest) GetInstallId() string {
 	if x != nil {
 		return x.InstallId
+	}
+	return ""
+}
+
+func (x *PasswordAuthenticateRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
 	}
 	return ""
 }
@@ -540,37 +572,41 @@ var File_internal_usercenter_proto protoreflect.FileDescriptor
 
 const file_internal_usercenter_proto_rawDesc = "" +
 	"\n" +
-	"\x19internal/usercenter.proto\x12\x0fgame01.internal\"\x89\x01\n" +
+	"\x19internal/usercenter.proto\x12\x0fgame01.internal\"\xb2\x01\n" +
 	"\x18GuestAuthenticateRequest\x12\x1d\n" +
 	"\n" +
 	"install_id\x18\x01 \x01(\tR\tinstallId\x12'\n" +
 	"\x0fclient_platform\x18\x02 \x01(\tR\x0eclientPlatform\x12%\n" +
-	"\x0eclient_version\x18\x03 \x01(\tR\rclientVersion\"\xb9\x01\n" +
+	"\x0eclient_version\x18\x03 \x01(\tR\rclientVersion\x12'\n" +
+	"\x0fidempotency_key\x18\x04 \x01(\tR\x0eidempotencyKey\"\xb9\x01\n" +
 	"\x19GuestAuthenticateResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12>\n" +
 	"\x1crefresh_token_expire_at_unix\x18\x03 \x01(\x03R\x18refreshTokenExpireAtUnix\x12\x18\n" +
-	"\acreated\x18\x04 \x01(\bR\acreated\"`\n" +
+	"\acreated\x18\x04 \x01(\bR\acreated\"\x89\x01\n" +
 	"\x1aRefreshAuthenticateRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\x12\x1d\n" +
 	"\n" +
-	"install_id\x18\x02 \x01(\tR\tinstallId\"\xa1\x01\n" +
+	"install_id\x18\x02 \x01(\tR\tinstallId\x12'\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"\xa1\x01\n" +
 	"\x1bRefreshAuthenticateResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12>\n" +
-	"\x1crefresh_token_expire_at_unix\x18\x03 \x01(\x03R\x18refreshTokenExpireAtUnix\"_\n" +
+	"\x1crefresh_token_expire_at_unix\x18\x03 \x01(\x03R\x18refreshTokenExpireAtUnix\"\x88\x01\n" +
 	"\x19RevokeRefreshTokenRequest\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12#\n" +
-	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\"\x1c\n" +
-	"\x1aRevokeRefreshTokenResponse\"t\n" +
+	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12'\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"\x1c\n" +
+	"\x1aRevokeRefreshTokenResponse\"\x9d\x01\n" +
 	"\x1bPasswordAuthenticateRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x1d\n" +
 	"\n" +
-	"install_id\x18\x03 \x01(\tR\tinstallId\"\xa2\x01\n" +
+	"install_id\x18\x03 \x01(\tR\tinstallId\x12'\n" +
+	"\x0fidempotency_key\x18\x04 \x01(\tR\x0eidempotencyKey\"\xa2\x01\n" +
 	"\x1cPasswordAuthenticateResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12#\n" +

@@ -21,6 +21,7 @@ gateway:
 
 usercenter:
   refresh_token_ttl: 720h
+  idempotency_ttl: 24h
 
 redis:
   address: "redis:6379"

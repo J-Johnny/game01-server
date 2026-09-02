@@ -2,21 +2,33 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
+
 	"server/common/config"
 
-	"github.com/pkg/errors"
-	"github.com/qiniu/qmgo"
+	driverMongo "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type IMongoModule interface {
-	Database() *qmgo.Database
-	Collection(name string) *qmgo.Collection
+	DriverResources
+	Init() error
+	AfterInit()
+	BeforeShutdown()
+	Shutdown() error
+}
+
+type DriverResources interface {
+	DriverClient() *driverMongo.Client
+	DriverDatabase() *driverMongo.Database
+	DriverCollection(name string) *driverMongo.Collection
 }
 
 type MongoModule struct {
-	dbConf   config.MongoConfig
-	client   *qmgo.Client
-	dbClient *qmgo.Database
+	dbConf       config.MongoConfig
+	driverClient *driverMongo.Client
+	driverDB     *driverMongo.Database
 }
 
 func NewMongoModule(conf *config.Config) *MongoModule {
@@ -26,34 +38,50 @@ func NewMongoModule(conf *config.Config) *MongoModule {
 	return m
 }
 
-func (m *MongoModule) Collection(name string) *qmgo.Collection {
-	return m.dbClient.Collection(name)
+func (m *MongoModule) DriverClient() *driverMongo.Client {
+	if m == nil {
+		return nil
+	}
+	return m.driverClient
 }
 
-func (m *MongoModule) Database() *qmgo.Database {
-	return m.dbClient
+func (m *MongoModule) DriverDatabase() *driverMongo.Database {
+	if m == nil {
+		return nil
+	}
+	return m.driverDB
+}
+
+func (m *MongoModule) DriverCollection(name string) *driverMongo.Collection {
+	if m == nil || m.driverDB == nil {
+		return nil
+	}
+	return m.driverDB.Collection(name)
 }
 
 func (m *MongoModule) Init() error {
-	qmgoConfig := &qmgo.Config{Uri: m.dbConf.URI}
+	driverOptions := options.Client().ApplyURI(m.dbConf.URI).SetConnectTimeout(m.dbConf.ConnectTimeout)
 	if m.dbConf.Username != "" || m.dbConf.Password != "" {
-		qmgoConfig.Auth = &qmgo.Credential{
+		driverOptions.SetAuth(options.Credential{
 			AuthMechanism: m.dbConf.AuthMechanism,
 			AuthSource:    m.dbConf.AuthSource,
 			Username:      m.dbConf.Username,
 			Password:      m.dbConf.Password,
-		}
+		})
 	}
-	cli, err := qmgo.NewClient(context.Background(), qmgoConfig)
+	driverClient, err := driverMongo.Connect(context.Background(), driverOptions)
 	if err != nil {
-		return errors.Wrap(err, "new mongodb client error")
+		return fmt.Errorf("connect mongodb: %w", err)
 	}
-	m.client = cli
-	err = m.client.Ping(5)
+	pingContext, cancel := context.WithTimeout(context.Background(), m.dbConf.ConnectTimeout)
+	err = driverClient.Ping(pingContext, readpref.Primary())
+	cancel()
 	if err != nil {
-		return errors.Wrap(err, "ping mongodb error")
+		_ = driverClient.Disconnect(context.Background())
+		return fmt.Errorf("ping mongodb: %w", err)
 	}
-	m.dbClient = m.client.Database(m.dbConf.Database)
+	m.driverClient = driverClient
+	m.driverDB = driverClient.Database(m.dbConf.Database)
 	return nil
 }
 
@@ -64,5 +92,14 @@ func (m *MongoModule) BeforeShutdown() {
 }
 
 func (m *MongoModule) Shutdown() error {
-	return m.client.Close(context.Background())
+	ctx := context.Background()
+	var first error
+	if m != nil && m.driverClient != nil {
+		if err := m.driverClient.Disconnect(ctx); err != nil {
+			first = err
+		}
+	}
+	return first
 }
+
+var _ DriverResources = (*MongoModule)(nil)

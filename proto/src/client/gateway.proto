@@ -39,6 +39,7 @@ message LoginRequest {
   string install_id = 3;
   string username = 4;
   string password = 5;
+  string idempotency_key = 6;
 }
 
 message LoginResponse {
@@ -53,6 +54,7 @@ message LoginResponse {
 message RefreshLoginRequest {
   string refresh_token = 1;
   string install_id = 2;
+  string idempotency_key = 3;
 }
 
 message RefreshLoginResponse {

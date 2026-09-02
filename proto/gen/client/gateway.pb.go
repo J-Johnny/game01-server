@@ -215,14 +215,15 @@ func (x *Envelope) GetPayload() []byte {
 }
 
 type LoginRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Provider      AuthProvider           `protobuf:"varint,1,opt,name=provider,proto3,enum=game01.client.gateway.AuthProvider" json:"provider,omitempty"`
-	Credential    string                 `protobuf:"bytes,2,opt,name=credential,proto3" json:"credential,omitempty"`
-	InstallId     string                 `protobuf:"bytes,3,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
-	Username      string                 `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,5,opt,name=password,proto3" json:"password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Provider       AuthProvider           `protobuf:"varint,1,opt,name=provider,proto3,enum=game01.client.gateway.AuthProvider" json:"provider,omitempty"`
+	Credential     string                 `protobuf:"bytes,2,opt,name=credential,proto3" json:"credential,omitempty"`
+	InstallId      string                 `protobuf:"bytes,3,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
+	Username       string                 `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
+	Password       string                 `protobuf:"bytes,5,opt,name=password,proto3" json:"password,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,6,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *LoginRequest) Reset() {
@@ -286,6 +287,13 @@ func (x *LoginRequest) GetUsername() string {
 func (x *LoginRequest) GetPassword() string {
 	if x != nil {
 		return x.Password
+	}
+	return ""
+}
+
+func (x *LoginRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
 	}
 	return ""
 }
@@ -375,11 +383,12 @@ func (x *LoginResponse) GetRefreshTokenExpireAtUnix() int64 {
 }
 
 type RefreshLoginRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	InstallId     string                 `protobuf:"bytes,2,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	RefreshToken   string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	InstallId      string                 `protobuf:"bytes,2,opt,name=install_id,json=installId,proto3" json:"install_id,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,3,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RefreshLoginRequest) Reset() {
@@ -422,6 +431,13 @@ func (x *RefreshLoginRequest) GetRefreshToken() string {
 func (x *RefreshLoginRequest) GetInstallId() string {
 	if x != nil {
 		return x.InstallId
+	}
+	return ""
+}
+
+func (x *RefreshLoginRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
 	}
 	return ""
 }
@@ -702,7 +718,7 @@ const file_client_gateway_proto_rawDesc = "" +
 	"request_id\x18\x02 \x01(\x04R\trequestId\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x03 \x01(\tR\tsessionId\x12\x18\n" +
-	"\apayload\x18\x04 \x01(\fR\apayload\"\xc6\x01\n" +
+	"\apayload\x18\x04 \x01(\fR\apayload\"\xef\x01\n" +
 	"\fLoginRequest\x12?\n" +
 	"\bprovider\x18\x01 \x01(\x0e2#.game01.client.gateway.AuthProviderR\bprovider\x12\x1e\n" +
 	"\n" +
@@ -711,7 +727,8 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\n" +
 	"install_id\x18\x03 \x01(\tR\tinstallId\x12\x1a\n" +
 	"\busername\x18\x04 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x05 \x01(\tR\bpassword\"\x80\x02\n" +
+	"\bpassword\x18\x05 \x01(\tR\bpassword\x12'\n" +
+	"\x0fidempotency_key\x18\x06 \x01(\tR\x0eidempotencyKey\"\x80\x02\n" +
 	"\rLoginResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1d\n" +
@@ -720,11 +737,12 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\fresume_token\x18\x03 \x01(\tR\vresumeToken\x12)\n" +
 	"\x10connection_epoch\x18\x04 \x01(\x04R\x0fconnectionEpoch\x12#\n" +
 	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\x12>\n" +
-	"\x1crefresh_token_expire_at_unix\x18\x06 \x01(\x03R\x18refreshTokenExpireAtUnix\"Y\n" +
+	"\x1crefresh_token_expire_at_unix\x18\x06 \x01(\x03R\x18refreshTokenExpireAtUnix\"\x82\x01\n" +
 	"\x13RefreshLoginRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\x12\x1d\n" +
 	"\n" +
-	"install_id\x18\x02 \x01(\tR\tinstallId\"\x87\x02\n" +
+	"install_id\x18\x02 \x01(\tR\tinstallId\x12'\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"\x87\x02\n" +
 	"\x14RefreshLoginResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1d\n" +

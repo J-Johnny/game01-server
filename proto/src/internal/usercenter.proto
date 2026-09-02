@@ -20,6 +20,7 @@ message GuestAuthenticateRequest {
   string install_id = 1;
   string client_platform = 2;
   string client_version = 3;
+  string idempotency_key = 4;
 }
 
 message GuestAuthenticateResponse {
@@ -32,6 +33,7 @@ message GuestAuthenticateResponse {
 message RefreshAuthenticateRequest {
   string refresh_token = 1;
   string install_id = 2;
+  string idempotency_key = 3;
 }
 
 message RefreshAuthenticateResponse {
@@ -43,6 +45,7 @@ message RefreshAuthenticateResponse {
 message RevokeRefreshTokenRequest {
   string account_id = 1;
   string refresh_token = 2;
+  string idempotency_key = 3;
 }
 
 message RevokeRefreshTokenResponse {}
@@ -51,6 +54,7 @@ message PasswordAuthenticateRequest {
   string username = 1;
   string password = 2;
   string install_id = 3;
+  string idempotency_key = 4;
 }
 
 message PasswordAuthenticateResponse {

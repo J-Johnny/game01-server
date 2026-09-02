@@ -15,7 +15,10 @@ type RedisStore struct {
 }
 
 func NewRedisStore(client *redis.Client, prefix string) *RedisStore {
-	return &RedisStore{client: client, prefix: prefix}
+	return &RedisStore{
+		client: client,
+		prefix: prefix,
+	}
 }
 
 func (s *RedisStore) key(id string) string { return s.prefix + id }

@@ -71,7 +71,11 @@ type Handler struct {
 
 func NewHandler(dispatch MessageDispatcher) *Handler {
 	return &Handler{
-		upgrader: websocket.Upgrader{ReadBufferSize: 4096, WriteBufferSize: 4096, CheckOrigin: func(*http.Request) bool { return true }},
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  4096,
+			WriteBufferSize: 4096,
+			CheckOrigin:     func(*http.Request) bool { return true },
+		},
 		dispatch: dispatch,
 	}
 }
@@ -86,7 +90,11 @@ func (h *Handler) Handle(c *gin.Context) {
 		return
 	}
 	ws.SetReadLimit(maxMessageSize)
-	conn := &Connection{ws: ws, send: make(chan []byte, 64), done: make(chan struct{})}
+	conn := &Connection{
+		ws:   ws,
+		send: make(chan []byte, 64),
+		done: make(chan struct{}),
+	}
 	connectionID, err := newConnectionID()
 	if err != nil {
 		slog.Error("create websocket connection ID", "protocol", "websocket", "request_id", requestID(c), "error", err)

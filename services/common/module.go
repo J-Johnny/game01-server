@@ -3,10 +3,11 @@ package common
 import (
 	"context"
 
-	"google.golang.org/protobuf/proto"
 	"server/common/app"
 	"server/common/streaming"
 	internalpb "server/proto/gen/internalpb"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type Module struct {
@@ -17,7 +18,12 @@ type Module struct {
 }
 
 func NewModule(name string, serviceType internalpb.ServiceType, deps app.Dependencies) *Module {
-	return &Module{name: name, serviceType: serviceType, deps: deps, streaming: streaming.NewClientManager(deps.Registry, serviceType, name, deps.Config.App.InstanceID, nil)}
+	return &Module{
+		name:        name,
+		serviceType: serviceType,
+		deps:        deps,
+		streaming:   streaming.NewClientManager(deps.Registry, serviceType, name, deps.Config.App.InstanceID, nil),
+	}
 }
 
 func (m *Module) Name() string {
@@ -47,7 +53,14 @@ func (m *Module) serviceStatus(_ context.Context, _ streaming.Peer, envelope *in
 	if err := proto.Unmarshal(envelope.Payload, request); err != nil {
 		return nil, err
 	}
-	return &streaming.MessageResult{MessageID: uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE), Message: &internalpb.ServiceStatusResponse{ServiceType: m.serviceType, InstanceId: m.deps.Config.App.InstanceID, Available: true}}, nil
+	return &streaming.MessageResult{
+		MessageID: uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE),
+		Message: &internalpb.ServiceStatusResponse{
+			ServiceType: m.serviceType,
+			InstanceId:  m.deps.Config.App.InstanceID,
+			Available:   true,
+		},
+	}, nil
 }
 
 func InternalTargets(source string) map[string]internalpb.ServiceType {

@@ -17,15 +17,17 @@ type UserCenterAuthenticator struct {
 }
 
 func NewUserCenterAuthenticator(client func() (*streaming.Client, bool)) *UserCenterAuthenticator {
-	return &UserCenterAuthenticator{client: client}
+	return &UserCenterAuthenticator{
+		client: client,
+	}
 }
 
-func (a *UserCenterAuthenticator) Authenticate(ctx context.Context, provider gatewaypb.AuthProvider, _, installID string) (Authentication, error) {
+func (a *UserCenterAuthenticator) Authenticate(ctx context.Context, provider gatewaypb.AuthProvider, _, installID, idempotencyKey string) (Authentication, error) {
 	if provider != gatewaypb.AuthProvider_AUTH_PROVIDER_GUEST {
 		return Authentication{}, errors.New("authentication provider is not enabled")
 	}
 
-	payload, err := proto.Marshal(&internalpb.GuestAuthenticateRequest{InstallId: installID})
+	payload, err := proto.Marshal(&internalpb.GuestAuthenticateRequest{InstallId: installID, IdempotencyKey: idempotencyKey})
 	if err != nil {
 		return Authentication{}, fmt.Errorf("marshal guest authentication request: %w", err)
 	}
@@ -40,11 +42,15 @@ func (a *UserCenterAuthenticator) Authenticate(ctx context.Context, provider gat
 	if message.AccountId == "" || message.RefreshToken == "" {
 		return Authentication{}, errors.New("user center returned incomplete guest authentication")
 	}
-	return Authentication{AccountID: message.AccountId, RefreshToken: message.RefreshToken, RefreshTokenExpireAt: time.Unix(message.RefreshTokenExpireAtUnix, 0)}, nil
+	return Authentication{
+		AccountID:            message.AccountId,
+		RefreshToken:         message.RefreshToken,
+		RefreshTokenExpireAt: time.Unix(message.RefreshTokenExpireAtUnix, 0),
+	}, nil
 }
 
-func (a *UserCenterAuthenticator) AuthenticatePassword(ctx context.Context, username, password, installID string) (Authentication, error) {
-	payload, err := proto.Marshal(&internalpb.PasswordAuthenticateRequest{Username: username, Password: password, InstallId: installID})
+func (a *UserCenterAuthenticator) AuthenticatePassword(ctx context.Context, username, password, installID, idempotencyKey string) (Authentication, error) {
+	payload, err := proto.Marshal(&internalpb.PasswordAuthenticateRequest{Username: username, Password: password, InstallId: installID, IdempotencyKey: idempotencyKey})
 	if err != nil {
 		return Authentication{}, fmt.Errorf("marshal password authentication request: %w", err)
 	}
@@ -59,11 +65,15 @@ func (a *UserCenterAuthenticator) AuthenticatePassword(ctx context.Context, user
 	if message.AccountId == "" || message.RefreshToken == "" {
 		return Authentication{}, errors.New("user center returned incomplete password authentication")
 	}
-	return Authentication{AccountID: message.AccountId, RefreshToken: message.RefreshToken, RefreshTokenExpireAt: time.Unix(message.RefreshTokenExpireAtUnix, 0)}, nil
+	return Authentication{
+		AccountID:            message.AccountId,
+		RefreshToken:         message.RefreshToken,
+		RefreshTokenExpireAt: time.Unix(message.RefreshTokenExpireAtUnix, 0),
+	}, nil
 }
 
-func (a *UserCenterAuthenticator) Refresh(ctx context.Context, refreshToken, installID string) (Authentication, error) {
-	payload, err := proto.Marshal(&internalpb.RefreshAuthenticateRequest{RefreshToken: refreshToken, InstallId: installID})
+func (a *UserCenterAuthenticator) Refresh(ctx context.Context, refreshToken, installID, idempotencyKey string) (Authentication, error) {
+	payload, err := proto.Marshal(&internalpb.RefreshAuthenticateRequest{RefreshToken: refreshToken, InstallId: installID, IdempotencyKey: idempotencyKey})
 	if err != nil {
 		return Authentication{}, fmt.Errorf("marshal refresh authentication request: %w", err)
 	}
@@ -78,7 +88,11 @@ func (a *UserCenterAuthenticator) Refresh(ctx context.Context, refreshToken, ins
 	if message.AccountId == "" || message.RefreshToken == "" {
 		return Authentication{}, errors.New("user center returned incomplete refresh authentication")
 	}
-	return Authentication{AccountID: message.AccountId, RefreshToken: message.RefreshToken, RefreshTokenExpireAt: time.Unix(message.RefreshTokenExpireAtUnix, 0)}, nil
+	return Authentication{
+		AccountID:            message.AccountId,
+		RefreshToken:         message.RefreshToken,
+		RefreshTokenExpireAt: time.Unix(message.RefreshTokenExpireAtUnix, 0),
+	}, nil
 }
 
 func (a *UserCenterAuthenticator) request(ctx context.Context, messageID uint32, payload []byte) (*internalpb.InternalEnvelope, error) {
