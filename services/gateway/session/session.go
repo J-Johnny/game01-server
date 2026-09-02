@@ -40,6 +40,30 @@ type Record struct {
 	ExpireAt          time.Time `json:"expire_at"`
 }
 
+type LifecycleType string
+
+const (
+	LifecycleConnected    LifecycleType = "connected"
+	LifecycleDisconnected LifecycleType = "disconnected"
+	LifecycleResumed      LifecycleType = "resumed"
+	LifecycleExpired      LifecycleType = "expired"
+	LifecyclePreempted    LifecycleType = "preempted"
+)
+
+type LifecycleEvent struct {
+	EventID           string
+	Type              LifecycleType
+	SessionID         string
+	AccountID         string
+	PlayerID          string
+	ConnectionID      string
+	ConnectionEpoch   uint64
+	GatewayInstanceID string
+	OccurredAt        time.Time
+}
+
+type LifecycleHandler func(context.Context, LifecycleEvent)
+
 type Store interface {
 	Create(context.Context, Record) error
 	Get(context.Context, string) (Record, error)
@@ -82,12 +106,11 @@ func (s *MemoryStore) ClaimAccount(_ context.Context, accountID string, record R
 	defer s.mu.Unlock()
 	var previous Record
 	for _, candidate := range s.records {
-		if candidate.AccountID == accountID && candidate.ConnectionID != "" {
+		if candidate.SessionID != record.SessionID && candidate.AccountID == accountID && candidate.ConnectionID != "" {
 			previous = candidate
 			break
 		}
 	}
-	_ = record
 	return previous, previous.ConnectionID != "", nil
 }
 
@@ -152,6 +175,7 @@ type Manager struct {
 	connections                map[string]string
 	accountConnections         map[string]string
 	preempt                    func(Record)
+	lifecycle                  LifecycleHandler
 }
 
 func NewManager(store Store, gatewayID string, sessionTTL, reconnectGrace time.Duration) *Manager {
@@ -169,6 +193,12 @@ func (m *Manager) SetPreemptHandler(handler func(Record)) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.preempt = handler
+}
+
+func (m *Manager) SetLifecycleHandler(handler LifecycleHandler) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.lifecycle = handler
 }
 
 type Created struct {
@@ -211,9 +241,13 @@ func (m *Manager) Create(ctx context.Context, accountID string, connectionID str
 	m.connections[connectionID] = sid
 	preempt := m.preempt
 	m.mu.Unlock()
-	if previous && previousRecord.ConnectionID != "" && previousRecord.ConnectionID != connectionID && preempt != nil {
-		preempt(previousRecord)
+	if previous && previousRecord.ConnectionID != "" && previousRecord.ConnectionID != connectionID {
+		if preempt != nil {
+			preempt(previousRecord)
+		}
+		m.emitLifecycle(ctx, LifecyclePreempted, previousRecord, now)
 	}
+	m.emitLifecycle(ctx, LifecycleConnected, r, now)
 	return Created{Record: r, ResumeToken: token}, nil
 }
 
@@ -237,6 +271,7 @@ func (m *Manager) disconnect(ctx context.Context, sessionID, connectionID string
 		return nil
 	}
 	expected := r
+	disconnected := r
 	r.State = StateReconnecting
 	r.ConnectionID = ""
 	r.ExpireAt = now.Add(m.reconnectGrace)
@@ -244,7 +279,7 @@ func (m *Manager) disconnect(ctx context.Context, sessionID, connectionID string
 		return err
 	}
 	if accountStore, ok := m.store.(AccountSessionStore); ok {
-		if err := accountStore.ReleaseAccount(ctx, r.AccountID, connectionID); err != nil {
+		if err := accountStore.ReleaseAccount(ctx, r.AccountID, expected.ConnectionID); err != nil {
 			return err
 		}
 	}
@@ -258,6 +293,8 @@ func (m *Manager) disconnect(ctx context.Context, sessionID, connectionID string
 		}
 	}
 	m.mu.Unlock()
+	m.emitLifecycle(ctx, LifecycleDisconnected, disconnected, now)
+	m.scheduleExpiry(disconnected, now.Add(m.reconnectGrace))
 	return nil
 }
 
@@ -290,15 +327,89 @@ func (m *Manager) Resume(ctx context.Context, sessionID, token, connectionID str
 	} else if !ok {
 		return Created{}, ErrSessionConflict
 	}
+	var previousRecord Record
+	var previous bool
 	if accountStore, ok := m.store.(AccountSessionStore); ok {
-		if _, _, err := accountStore.ClaimAccount(ctx, r.AccountID, r); err != nil {
+		previousRecord, previous, err = accountStore.ClaimAccount(ctx, r.AccountID, r)
+		if err != nil {
 			return Created{}, err
 		}
 	}
 	m.mu.Lock()
+	if !previous {
+		previousConnectionID := m.accountConnections[r.AccountID]
+		previous = previousConnectionID != "" && previousConnectionID != connectionID
+		if previous {
+			previousRecord = Record{AccountID: r.AccountID, ConnectionID: previousConnectionID}
+		}
+	}
+	m.accountConnections[r.AccountID] = connectionID
 	m.connections[connectionID] = sessionID
+	preempt := m.preempt
 	m.mu.Unlock()
+	if previous && previousRecord.ConnectionID != "" && previousRecord.ConnectionID != connectionID {
+		if preempt != nil {
+			preempt(previousRecord)
+		}
+		m.emitLifecycle(ctx, LifecyclePreempted, previousRecord, now)
+	}
+	m.emitLifecycle(ctx, LifecycleResumed, r, now)
 	return Created{Record: r, ResumeToken: nextToken}, nil
+}
+
+func (m *Manager) scheduleExpiry(disconnected Record, expiresAt time.Time) {
+	delay := time.Until(expiresAt)
+	if delay <= 0 {
+		delay = time.Millisecond
+	}
+	go func() {
+		timer := time.NewTimer(delay)
+		defer timer.Stop()
+		<-timer.C
+		m.expire(disconnected, time.Now())
+	}()
+}
+
+func (m *Manager) expire(disconnected Record, now time.Time) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	record, err := m.store.Get(ctx, disconnected.SessionID)
+	if errors.Is(err, ErrNotFound) {
+		disconnected.State = StateExpired
+		m.emitLifecycle(ctx, LifecycleExpired, disconnected, now)
+		return
+	}
+	if err != nil || record.State != StateReconnecting || record.ConnectionEpoch != disconnected.ConnectionEpoch || now.Before(record.ExpireAt) {
+		return
+	}
+	if err := m.store.Delete(ctx, disconnected.SessionID); err != nil {
+		return
+	}
+	if accountStore, ok := m.store.(AccountSessionStore); ok {
+		_ = accountStore.ReleaseAccount(ctx, record.AccountID, "")
+	}
+	record.State = StateExpired
+	m.emitLifecycle(ctx, LifecycleExpired, record, now)
+}
+
+func (m *Manager) emitLifecycle(ctx context.Context, eventType LifecycleType, record Record, now time.Time) {
+	m.mu.Lock()
+	handler := m.lifecycle
+	m.mu.Unlock()
+	if handler == nil {
+		return
+	}
+	handler(ctx, LifecycleEvent{
+		EventID:           fmt.Sprintf("%s:%d:%s", record.SessionID, record.ConnectionEpoch, eventType),
+		Type:              eventType,
+		SessionID:         record.SessionID,
+		AccountID:         record.AccountID,
+		PlayerID:          record.PlayerID,
+		ConnectionID:      record.ConnectionID,
+		ConnectionEpoch:   record.ConnectionEpoch,
+		GatewayInstanceID: record.GatewayInstanceID,
+		OccurredAt:        now,
+	})
 }
 
 func (m *Manager) saveVersion(ctx context.Context, expected, updated Record) error {

@@ -20,6 +20,7 @@ gateway:
   retry_attempts: 3
   circuit_failures: 3
   circuit_reset_timeout: 5s
+  drain_timeout: 10s
 usercenter:
   refresh_token_ttl: 720h
   idempotency_ttl: 24h

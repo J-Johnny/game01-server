@@ -29,6 +29,7 @@ const (
 	InternalMessageId_INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE       InternalMessageId = 101
 	InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST  InternalMessageId = 2001
 	InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE InternalMessageId = 2101
+	InternalMessageId_INTERNAL_MESSAGE_ID_SESSION_LIFECYCLE_EVENT       InternalMessageId = 2201
 )
 
 // Enum value maps for InternalMessageId.
@@ -39,6 +40,7 @@ var (
 		101:  "INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE",
 		2001: "INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST",
 		2101: "INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE",
+		2201: "INTERNAL_MESSAGE_ID_SESSION_LIFECYCLE_EVENT",
 	}
 	InternalMessageId_value = map[string]int32{
 		"INTERNAL_MESSAGE_ID_UNSPECIFIED":                   0,
@@ -46,6 +48,7 @@ var (
 		"INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE":       101,
 		"INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST":  2001,
 		"INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE": 2101,
+		"INTERNAL_MESSAGE_ID_SESSION_LIFECYCLE_EVENT":       2201,
 	}
 )
 
@@ -475,13 +478,14 @@ const file_internal_service_proto_rawDesc = "" +
 	"\x04mode\x18\x06 \x01(\x0e2\x1c.game01.internal.RestoreModeR\x04mode\x12,\n" +
 	"\x12base_state_version\x18\a \x01(\x04R\x10baseStateVersion\x12D\n" +
 	"\fpayload_type\x18\b \x01(\x0e2!.game01.internal.StatePayloadTypeR\vpayloadType\x12%\n" +
-	"\x0eschema_version\x18\t \x01(\rR\rschemaVersion*\x88\x02\n" +
+	"\x0eschema_version\x18\t \x01(\rR\rschemaVersion*\xba\x02\n" +
 	"\x11InternalMessageId\x12#\n" +
 	"\x1fINTERNAL_MESSAGE_ID_UNSPECIFIED\x10\x00\x12.\n" +
 	"*INTERNAL_MESSAGE_ID_SERVICE_STATUS_REQUEST\x10\x01\x12/\n" +
 	"+INTERNAL_MESSAGE_ID_SERVICE_STATUS_RESPONSE\x10e\x125\n" +
 	"0INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST\x10\xd1\x0f\x126\n" +
-	"1INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE\x10\xb5\x10*S\n" +
+	"1INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE\x10\xb5\x10\x120\n" +
+	"+INTERNAL_MESSAGE_ID_SESSION_LIFECYCLE_EVENT\x10\x99\x11*S\n" +
 	"\vRestoreMode\x12\x15\n" +
 	"\x11RESTORE_MODE_FULL\x10\x00\x12\x16\n" +
 	"\x12RESTORE_MODE_DELTA\x10\x01\x12\x15\n" +

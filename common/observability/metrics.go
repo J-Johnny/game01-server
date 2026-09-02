@@ -23,6 +23,10 @@ type Metrics struct {
 	circuitCalls          *prometheus.CounterVec
 	circuitState          *prometheus.GaugeVec
 	circuitTransitions    *prometheus.CounterVec
+	sessionLifecycle      *prometheus.CounterVec
+	sessionLifecycleQueue prometheus.Gauge
+	gatewayErrors         *prometheus.CounterVec
+	gatewayConnections    prometheus.Gauge
 }
 
 func NewMetrics() *Metrics {
@@ -84,6 +88,30 @@ func NewMetrics() *Metrics {
 			Name:      "circuit_breaker_transitions_total",
 			Help:      "Total number of circuit breaker state transitions.",
 		}, []string{"caller_service", "target_service", "operation", "from", "to"}),
+		sessionLifecycle: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "game01",
+			Subsystem: "gateway",
+			Name:      "session_lifecycle_events_total",
+			Help:      "Gateway session lifecycle event delivery attempts by target and result.",
+		}, []string{"target_service", "event_type", "result"}),
+		sessionLifecycleQueue: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: "game01",
+			Subsystem: "gateway",
+			Name:      "session_lifecycle_queue_depth",
+			Help:      "Current queued Gateway session lifecycle events.",
+		}),
+		gatewayErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "game01",
+			Subsystem: "gateway",
+			Name:      "public_errors_total",
+			Help:      "Gateway public errors sent to clients by stable code.",
+		}, []string{"code", "retryable"}),
+		gatewayConnections: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: "game01",
+			Subsystem: "gateway",
+			Name:      "websocket_connections",
+			Help:      "Current Gateway WebSocket connections.",
+		}),
 	}
 	registry.MustRegister(
 		metrics.requestAttempts,
@@ -95,8 +123,40 @@ func NewMetrics() *Metrics {
 		metrics.circuitCalls,
 		metrics.circuitState,
 		metrics.circuitTransitions,
+		metrics.sessionLifecycle,
+		metrics.sessionLifecycleQueue,
+		metrics.gatewayErrors,
+		metrics.gatewayConnections,
 	)
 	return metrics
+}
+
+func (m *Metrics) ObserveSessionLifecycle(targetService, eventType, result string) {
+	if m != nil {
+		m.sessionLifecycle.WithLabelValues(targetService, eventType, result).Inc()
+	}
+}
+
+func (m *Metrics) SetSessionLifecycleQueueDepth(depth int) {
+	if m != nil {
+		m.sessionLifecycleQueue.Set(float64(depth))
+	}
+}
+
+func (m *Metrics) ObserveGatewayError(code string, retryable bool) {
+	if m != nil {
+		value := "false"
+		if retryable {
+			value = "true"
+		}
+		m.gatewayErrors.WithLabelValues(code, value).Inc()
+	}
+}
+
+func (m *Metrics) SetGatewayConnections(count int) {
+	if m != nil {
+		m.gatewayConnections.Set(float64(count))
+	}
 }
 
 func (m *Metrics) Handler() http.Handler {

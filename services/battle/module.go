@@ -23,11 +23,15 @@ type Module struct {
 	*servicecommon.Module
 	settlements *LobbySettlementClient
 	rooms       *components.RoomManager
+	lifecycle   *servicecommon.SessionLifecycleConsumer
 	initErr     error
 }
 
 func NewModule(deps app.Dependencies) *Module {
-	module := &Module{Module: servicecommon.NewModule("battle", internalpb.ServiceType_SERVICE_TYPE_BATTLE, deps)}
+	module := &Module{
+		Module:    servicecommon.NewModule("battle", internalpb.ServiceType_SERVICE_TYPE_BATTLE, deps),
+		lifecycle: servicecommon.NewSessionLifecycleConsumer(),
+	}
 	module.settlements = NewLobbySettlementClient(func() (*streaming.Client, bool) { return module.Client("lobby") })
 	driverResources, ok := deps.Mongo.(commonmongo.DriverResources)
 	if !ok || driverResources.DriverDatabase() == nil {
@@ -54,6 +58,9 @@ func (m *Module) Start(ctx context.Context) error {
 
 func (m *Module) RegisterInternal(router *streaming.Router) {
 	m.Module.RegisterInternal(router)
+	if m.lifecycle != nil {
+		m.lifecycle.Register(router, internalpb.ServiceType_SERVICE_TYPE_BATTLE)
+	}
 	router.Register(internalpb.ServiceType_SERVICE_TYPE_BATTLE, uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST), streaming.MessageHandlerFunc(m.restorePlayerState))
 }
 

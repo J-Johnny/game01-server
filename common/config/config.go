@@ -54,6 +54,7 @@ type GatewayConfig struct {
 	RetryAttempts      int           `yaml:"retry_attempts"`
 	CircuitFailures    int           `yaml:"circuit_failures"`
 	CircuitReset       time.Duration `yaml:"circuit_reset_timeout"`
+	DrainTimeout       time.Duration `yaml:"drain_timeout"`
 }
 
 type UserCenterConfig struct {
@@ -99,17 +100,66 @@ type BattleConfig struct {
 
 func Defaults() Config {
 	return Config{
-		App:         AppConfig{"game-server", "game-server-local", "local", 15 * time.Second},
-		HTTP:        HTTPConfig{":8080", 10 * time.Second, 10 * time.Second},
-		GRPC:        GRPCConfig{":9090", "127.0.0.1:9090"},
-		Gateway:     GatewayConfig{24 * time.Hour, 30 * time.Second, 10 * time.Second, 30 * time.Second, 30, 10, 3, 3, 5 * time.Second},
-		UserCenter:  UserCenterConfig{30 * 24 * time.Hour, 24 * time.Hour},
-		Redis:       RedisConfig{"127.0.0.1:6379", "", 0},
-		Mongo:       MongoConfig{"mongodb://127.0.0.1:27017", "game01", 5 * time.Second, "", "", "", ""},
-		Discovery:   DiscoveryConfig{"static", []string{"http://127.0.0.1:2379"}, "/services/game01", 10},
-		IDGenerator: IDGeneratorConfig{1},
-		Services:    map[string]ServiceConfig{"gateway": {true}, "usercenter": {true}, "lobby": {true}, "battle": {true}},
-		Battle:      BattleConfig{20, 8},
+		App: AppConfig{
+			Name:            "game-server",
+			InstanceID:      "game-server-local",
+			Environment:     "local",
+			ShutdownTimeout: 15 * time.Second,
+		},
+		HTTP: HTTPConfig{
+			Address:      ":8080",
+			ReadTimeout:  10 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		},
+		GRPC: GRPCConfig{
+			ListenAddress:    ":9090",
+			AdvertiseAddress: "127.0.0.1:9090",
+		},
+		Gateway: GatewayConfig{
+			SessionTTL:         24 * time.Hour,
+			ReconnectGrace:     30 * time.Second,
+			HeartbeatInterval:  10 * time.Second,
+			HeartbeatTimeout:   30 * time.Second,
+			RateLimitBurst:     30,
+			RateLimitPerSecond: 10,
+			RetryAttempts:      3,
+			CircuitFailures:    3,
+			CircuitReset:       5 * time.Second,
+			DrainTimeout:       10 * time.Second,
+		},
+		UserCenter: UserCenterConfig{
+			RefreshTokenTTL: 30 * 24 * time.Hour,
+			IdempotencyTTL:  24 * time.Hour,
+		},
+		Redis: RedisConfig{
+			Address:  "127.0.0.1:6379",
+			Password: "",
+			DB:       0,
+		},
+		Mongo: MongoConfig{
+			URI:            "mongodb://127.0.0.1:27017",
+			Database:       "game01",
+			ConnectTimeout: 5 * time.Second,
+		},
+		Discovery: DiscoveryConfig{
+			Provider:  "static",
+			Endpoints: []string{"http://127.0.0.1:2379"},
+			Namespace: "/services/game01",
+			LeaseTTL:  10,
+		},
+		IDGenerator: IDGeneratorConfig{
+			NodeID: 1,
+		},
+		Services: map[string]ServiceConfig{
+			"gateway":    {Enabled: true},
+			"usercenter": {Enabled: true},
+			"lobby":      {Enabled: true},
+			"battle":     {Enabled: true},
+		},
+		Battle: BattleConfig{
+			TickRate:          20,
+			MaxPlayersPerRoom: 8,
+		},
 	}
 }
 
@@ -148,8 +198,11 @@ func Validate(c Config) error {
 	if c.Gateway.SessionTTL <= 0 || c.Gateway.ReconnectGrace <= 0 || c.Gateway.HeartbeatInterval <= 0 || c.Gateway.HeartbeatTimeout <= 0 {
 		return errors.New("gateway session and heartbeat durations must be positive")
 	}
-	if c.Gateway.RateLimitBurst <= 0 || c.Gateway.RateLimitPerSecond <= 0 || c.Gateway.RetryAttempts <= 0 || c.Gateway.CircuitFailures <= 0 || c.Gateway.CircuitReset <= 0 {
+	if c.Gateway.RateLimitBurst <= 0 || c.Gateway.RateLimitPerSecond <= 0 || c.Gateway.RetryAttempts <= 0 || c.Gateway.CircuitFailures <= 0 || c.Gateway.CircuitReset <= 0 || c.Gateway.DrainTimeout <= 0 {
 		return errors.New("gateway reliability settings must be positive")
+	}
+	if c.Gateway.DrainTimeout >= c.App.ShutdownTimeout {
+		return errors.New("gateway.drain_timeout must be shorter than app.shutdown_timeout")
 	}
 	if c.UserCenter.RefreshTokenTTL <= 0 || c.UserCenter.IdempotencyTTL <= 0 {
 		return errors.New("usercenter.refresh_token_ttl and usercenter.idempotency_ttl must be positive")

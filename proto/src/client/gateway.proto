@@ -14,6 +14,8 @@ enum ClientMessageId {
   CLIENT_MESSAGE_ID_RESUME_RESPONSE = 102;
   CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE = 103;
   CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT = 104;
+  CLIENT_MESSAGE_ID_SESSION_PREEMPTED_EVENT = 105;
+  CLIENT_MESSAGE_ID_GATEWAY_DRAINING_EVENT = 106;
   CLIENT_MESSAGE_ID_ERROR_RESPONSE = 900;
 }
 
@@ -83,9 +85,35 @@ message ResumeResponse {
   string player_id = 5;
 }
 
+enum GatewayErrorCode {
+  GATEWAY_ERROR_CODE_UNSPECIFIED = 0;
+  GATEWAY_ERROR_CODE_INVALID_REQUEST = 1;
+  GATEWAY_ERROR_CODE_AUTHENTICATION_FAILED = 2;
+  GATEWAY_ERROR_CODE_SESSION_INVALID = 3;
+  GATEWAY_ERROR_CODE_UNSUPPORTED_MESSAGE = 4;
+  GATEWAY_ERROR_CODE_REFRESH_FAILED = 5;
+  GATEWAY_ERROR_CODE_PLAYER_UNAVAILABLE = 6;
+  GATEWAY_ERROR_CODE_SERVICE_UNAVAILABLE = 7;
+  GATEWAY_ERROR_CODE_RATE_LIMITED = 8;
+  GATEWAY_ERROR_CODE_GATEWAY_DRAINING = 9;
+  GATEWAY_ERROR_CODE_INTERNAL = 10;
+}
+
 message ErrorResponse {
-  uint32 code = 1;
+  GatewayErrorCode code = 1;
   string message = 2;
+  bool retryable = 3;
+  uint64 retry_after_millis = 4;
+}
+
+message SessionPreemptedEvent {
+  string session_id = 1;
+  uint64 connection_epoch = 2;
+  string reason = 3;
+}
+
+message GatewayDrainingEvent {
+  uint64 reconnect_after_millis = 1;
 }
 
 message StateRestoreEvent {

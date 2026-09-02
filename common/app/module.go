@@ -31,6 +31,11 @@ type Module interface {
 	Stop(context.Context) error
 }
 
+type DrainingModule interface {
+	BeginDrain()
+	Drain(context.Context) error
+}
+
 func StartEnabled(ctx context.Context, r gin.IRouter, d Dependencies, ms []Module) ([]Module, error) {
 	started := make([]Module, 0, len(ms))
 	for _, m := range ms {

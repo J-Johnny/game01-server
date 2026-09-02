@@ -1,6 +1,7 @@
 x-game-server: &game-server
   image: ${GAME_SERVER_IMAGE:?set GAME_SERVER_IMAGE to the immutable production image tag}
   restart: unless-stopped
+  stop_grace_period: 30s
   environment: &game-environment
     GAME_ENVIRONMENT: production
     GAME_HTTP_ADDRESS: ":8080"

@@ -24,15 +24,17 @@ const (
 type ClientMessageId int32
 
 const (
-	ClientMessageId_CLIENT_MESSAGE_ID_UNSPECIFIED            ClientMessageId = 0
-	ClientMessageId_CLIENT_MESSAGE_ID_LOGIN_REQUEST          ClientMessageId = 1
-	ClientMessageId_CLIENT_MESSAGE_ID_RESUME_REQUEST         ClientMessageId = 2
-	ClientMessageId_CLIENT_MESSAGE_ID_REFRESH_LOGIN_REQUEST  ClientMessageId = 3
-	ClientMessageId_CLIENT_MESSAGE_ID_LOGIN_RESPONSE         ClientMessageId = 101
-	ClientMessageId_CLIENT_MESSAGE_ID_RESUME_RESPONSE        ClientMessageId = 102
-	ClientMessageId_CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE ClientMessageId = 103
-	ClientMessageId_CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT    ClientMessageId = 104
-	ClientMessageId_CLIENT_MESSAGE_ID_ERROR_RESPONSE         ClientMessageId = 900
+	ClientMessageId_CLIENT_MESSAGE_ID_UNSPECIFIED             ClientMessageId = 0
+	ClientMessageId_CLIENT_MESSAGE_ID_LOGIN_REQUEST           ClientMessageId = 1
+	ClientMessageId_CLIENT_MESSAGE_ID_RESUME_REQUEST          ClientMessageId = 2
+	ClientMessageId_CLIENT_MESSAGE_ID_REFRESH_LOGIN_REQUEST   ClientMessageId = 3
+	ClientMessageId_CLIENT_MESSAGE_ID_LOGIN_RESPONSE          ClientMessageId = 101
+	ClientMessageId_CLIENT_MESSAGE_ID_RESUME_RESPONSE         ClientMessageId = 102
+	ClientMessageId_CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE  ClientMessageId = 103
+	ClientMessageId_CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT     ClientMessageId = 104
+	ClientMessageId_CLIENT_MESSAGE_ID_SESSION_PREEMPTED_EVENT ClientMessageId = 105
+	ClientMessageId_CLIENT_MESSAGE_ID_GATEWAY_DRAINING_EVENT  ClientMessageId = 106
+	ClientMessageId_CLIENT_MESSAGE_ID_ERROR_RESPONSE          ClientMessageId = 900
 )
 
 // Enum value maps for ClientMessageId.
@@ -46,18 +48,22 @@ var (
 		102: "CLIENT_MESSAGE_ID_RESUME_RESPONSE",
 		103: "CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE",
 		104: "CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT",
+		105: "CLIENT_MESSAGE_ID_SESSION_PREEMPTED_EVENT",
+		106: "CLIENT_MESSAGE_ID_GATEWAY_DRAINING_EVENT",
 		900: "CLIENT_MESSAGE_ID_ERROR_RESPONSE",
 	}
 	ClientMessageId_value = map[string]int32{
-		"CLIENT_MESSAGE_ID_UNSPECIFIED":            0,
-		"CLIENT_MESSAGE_ID_LOGIN_REQUEST":          1,
-		"CLIENT_MESSAGE_ID_RESUME_REQUEST":         2,
-		"CLIENT_MESSAGE_ID_REFRESH_LOGIN_REQUEST":  3,
-		"CLIENT_MESSAGE_ID_LOGIN_RESPONSE":         101,
-		"CLIENT_MESSAGE_ID_RESUME_RESPONSE":        102,
-		"CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE": 103,
-		"CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT":    104,
-		"CLIENT_MESSAGE_ID_ERROR_RESPONSE":         900,
+		"CLIENT_MESSAGE_ID_UNSPECIFIED":             0,
+		"CLIENT_MESSAGE_ID_LOGIN_REQUEST":           1,
+		"CLIENT_MESSAGE_ID_RESUME_REQUEST":          2,
+		"CLIENT_MESSAGE_ID_REFRESH_LOGIN_REQUEST":   3,
+		"CLIENT_MESSAGE_ID_LOGIN_RESPONSE":          101,
+		"CLIENT_MESSAGE_ID_RESUME_RESPONSE":         102,
+		"CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE":  103,
+		"CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT":     104,
+		"CLIENT_MESSAGE_ID_SESSION_PREEMPTED_EVENT": 105,
+		"CLIENT_MESSAGE_ID_GATEWAY_DRAINING_EVENT":  106,
+		"CLIENT_MESSAGE_ID_ERROR_RESPONSE":          900,
 	}
 )
 
@@ -149,6 +155,79 @@ func (AuthProvider) EnumDescriptor() ([]byte, []int) {
 	return file_client_gateway_proto_rawDescGZIP(), []int{1}
 }
 
+type GatewayErrorCode int32
+
+const (
+	GatewayErrorCode_GATEWAY_ERROR_CODE_UNSPECIFIED           GatewayErrorCode = 0
+	GatewayErrorCode_GATEWAY_ERROR_CODE_INVALID_REQUEST       GatewayErrorCode = 1
+	GatewayErrorCode_GATEWAY_ERROR_CODE_AUTHENTICATION_FAILED GatewayErrorCode = 2
+	GatewayErrorCode_GATEWAY_ERROR_CODE_SESSION_INVALID       GatewayErrorCode = 3
+	GatewayErrorCode_GATEWAY_ERROR_CODE_UNSUPPORTED_MESSAGE   GatewayErrorCode = 4
+	GatewayErrorCode_GATEWAY_ERROR_CODE_REFRESH_FAILED        GatewayErrorCode = 5
+	GatewayErrorCode_GATEWAY_ERROR_CODE_PLAYER_UNAVAILABLE    GatewayErrorCode = 6
+	GatewayErrorCode_GATEWAY_ERROR_CODE_SERVICE_UNAVAILABLE   GatewayErrorCode = 7
+	GatewayErrorCode_GATEWAY_ERROR_CODE_RATE_LIMITED          GatewayErrorCode = 8
+	GatewayErrorCode_GATEWAY_ERROR_CODE_GATEWAY_DRAINING      GatewayErrorCode = 9
+	GatewayErrorCode_GATEWAY_ERROR_CODE_INTERNAL              GatewayErrorCode = 10
+)
+
+// Enum value maps for GatewayErrorCode.
+var (
+	GatewayErrorCode_name = map[int32]string{
+		0:  "GATEWAY_ERROR_CODE_UNSPECIFIED",
+		1:  "GATEWAY_ERROR_CODE_INVALID_REQUEST",
+		2:  "GATEWAY_ERROR_CODE_AUTHENTICATION_FAILED",
+		3:  "GATEWAY_ERROR_CODE_SESSION_INVALID",
+		4:  "GATEWAY_ERROR_CODE_UNSUPPORTED_MESSAGE",
+		5:  "GATEWAY_ERROR_CODE_REFRESH_FAILED",
+		6:  "GATEWAY_ERROR_CODE_PLAYER_UNAVAILABLE",
+		7:  "GATEWAY_ERROR_CODE_SERVICE_UNAVAILABLE",
+		8:  "GATEWAY_ERROR_CODE_RATE_LIMITED",
+		9:  "GATEWAY_ERROR_CODE_GATEWAY_DRAINING",
+		10: "GATEWAY_ERROR_CODE_INTERNAL",
+	}
+	GatewayErrorCode_value = map[string]int32{
+		"GATEWAY_ERROR_CODE_UNSPECIFIED":           0,
+		"GATEWAY_ERROR_CODE_INVALID_REQUEST":       1,
+		"GATEWAY_ERROR_CODE_AUTHENTICATION_FAILED": 2,
+		"GATEWAY_ERROR_CODE_SESSION_INVALID":       3,
+		"GATEWAY_ERROR_CODE_UNSUPPORTED_MESSAGE":   4,
+		"GATEWAY_ERROR_CODE_REFRESH_FAILED":        5,
+		"GATEWAY_ERROR_CODE_PLAYER_UNAVAILABLE":    6,
+		"GATEWAY_ERROR_CODE_SERVICE_UNAVAILABLE":   7,
+		"GATEWAY_ERROR_CODE_RATE_LIMITED":          8,
+		"GATEWAY_ERROR_CODE_GATEWAY_DRAINING":      9,
+		"GATEWAY_ERROR_CODE_INTERNAL":              10,
+	}
+)
+
+func (x GatewayErrorCode) Enum() *GatewayErrorCode {
+	p := new(GatewayErrorCode)
+	*p = x
+	return p
+}
+
+func (x GatewayErrorCode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (GatewayErrorCode) Descriptor() protoreflect.EnumDescriptor {
+	return file_client_gateway_proto_enumTypes[2].Descriptor()
+}
+
+func (GatewayErrorCode) Type() protoreflect.EnumType {
+	return &file_client_gateway_proto_enumTypes[2]
+}
+
+func (x GatewayErrorCode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use GatewayErrorCode.Descriptor instead.
+func (GatewayErrorCode) EnumDescriptor() ([]byte, []int) {
+	return file_client_gateway_proto_rawDescGZIP(), []int{2}
+}
+
 type RestoreMode int32
 
 const (
@@ -182,11 +261,11 @@ func (x RestoreMode) String() string {
 }
 
 func (RestoreMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_client_gateway_proto_enumTypes[2].Descriptor()
+	return file_client_gateway_proto_enumTypes[3].Descriptor()
 }
 
 func (RestoreMode) Type() protoreflect.EnumType {
-	return &file_client_gateway_proto_enumTypes[2]
+	return &file_client_gateway_proto_enumTypes[3]
 }
 
 func (x RestoreMode) Number() protoreflect.EnumNumber {
@@ -195,7 +274,7 @@ func (x RestoreMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RestoreMode.Descriptor instead.
 func (RestoreMode) EnumDescriptor() ([]byte, []int) {
-	return file_client_gateway_proto_rawDescGZIP(), []int{2}
+	return file_client_gateway_proto_rawDescGZIP(), []int{3}
 }
 
 type StatePayloadType int32
@@ -234,11 +313,11 @@ func (x StatePayloadType) String() string {
 }
 
 func (StatePayloadType) Descriptor() protoreflect.EnumDescriptor {
-	return file_client_gateway_proto_enumTypes[3].Descriptor()
+	return file_client_gateway_proto_enumTypes[4].Descriptor()
 }
 
 func (StatePayloadType) Type() protoreflect.EnumType {
-	return &file_client_gateway_proto_enumTypes[3]
+	return &file_client_gateway_proto_enumTypes[4]
 }
 
 func (x StatePayloadType) Number() protoreflect.EnumNumber {
@@ -247,7 +326,7 @@ func (x StatePayloadType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use StatePayloadType.Descriptor instead.
 func (StatePayloadType) EnumDescriptor() ([]byte, []int) {
-	return file_client_gateway_proto_rawDescGZIP(), []int{3}
+	return file_client_gateway_proto_rawDescGZIP(), []int{4}
 }
 
 type Envelope struct {
@@ -783,11 +862,13 @@ func (x *ResumeResponse) GetPlayerId() string {
 }
 
 type ErrorResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          uint32                 `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Code             GatewayErrorCode       `protobuf:"varint,1,opt,name=code,proto3,enum=game01.client.gateway.GatewayErrorCode" json:"code,omitempty"`
+	Message          string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Retryable        bool                   `protobuf:"varint,3,opt,name=retryable,proto3" json:"retryable,omitempty"`
+	RetryAfterMillis uint64                 `protobuf:"varint,4,opt,name=retry_after_millis,json=retryAfterMillis,proto3" json:"retry_after_millis,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ErrorResponse) Reset() {
@@ -820,11 +901,11 @@ func (*ErrorResponse) Descriptor() ([]byte, []int) {
 	return file_client_gateway_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ErrorResponse) GetCode() uint32 {
+func (x *ErrorResponse) GetCode() GatewayErrorCode {
 	if x != nil {
 		return x.Code
 	}
-	return 0
+	return GatewayErrorCode_GATEWAY_ERROR_CODE_UNSPECIFIED
 }
 
 func (x *ErrorResponse) GetMessage() string {
@@ -832,6 +913,124 @@ func (x *ErrorResponse) GetMessage() string {
 		return x.Message
 	}
 	return ""
+}
+
+func (x *ErrorResponse) GetRetryable() bool {
+	if x != nil {
+		return x.Retryable
+	}
+	return false
+}
+
+func (x *ErrorResponse) GetRetryAfterMillis() uint64 {
+	if x != nil {
+		return x.RetryAfterMillis
+	}
+	return 0
+}
+
+type SessionPreemptedEvent struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	SessionId       string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ConnectionEpoch uint64                 `protobuf:"varint,2,opt,name=connection_epoch,json=connectionEpoch,proto3" json:"connection_epoch,omitempty"`
+	Reason          string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SessionPreemptedEvent) Reset() {
+	*x = SessionPreemptedEvent{}
+	mi := &file_client_gateway_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SessionPreemptedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SessionPreemptedEvent) ProtoMessage() {}
+
+func (x *SessionPreemptedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_client_gateway_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SessionPreemptedEvent.ProtoReflect.Descriptor instead.
+func (*SessionPreemptedEvent) Descriptor() ([]byte, []int) {
+	return file_client_gateway_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SessionPreemptedEvent) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SessionPreemptedEvent) GetConnectionEpoch() uint64 {
+	if x != nil {
+		return x.ConnectionEpoch
+	}
+	return 0
+}
+
+func (x *SessionPreemptedEvent) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type GatewayDrainingEvent struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	ReconnectAfterMillis uint64                 `protobuf:"varint,1,opt,name=reconnect_after_millis,json=reconnectAfterMillis,proto3" json:"reconnect_after_millis,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *GatewayDrainingEvent) Reset() {
+	*x = GatewayDrainingEvent{}
+	mi := &file_client_gateway_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GatewayDrainingEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GatewayDrainingEvent) ProtoMessage() {}
+
+func (x *GatewayDrainingEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_client_gateway_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GatewayDrainingEvent.ProtoReflect.Descriptor instead.
+func (*GatewayDrainingEvent) Descriptor() ([]byte, []int) {
+	return file_client_gateway_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GatewayDrainingEvent) GetReconnectAfterMillis() uint64 {
+	if x != nil {
+		return x.ReconnectAfterMillis
+	}
+	return 0
 }
 
 type StateRestoreEvent struct {
@@ -851,7 +1050,7 @@ type StateRestoreEvent struct {
 
 func (x *StateRestoreEvent) Reset() {
 	*x = StateRestoreEvent{}
-	mi := &file_client_gateway_proto_msgTypes[8]
+	mi := &file_client_gateway_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -863,7 +1062,7 @@ func (x *StateRestoreEvent) String() string {
 func (*StateRestoreEvent) ProtoMessage() {}
 
 func (x *StateRestoreEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_client_gateway_proto_msgTypes[8]
+	mi := &file_client_gateway_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -876,7 +1075,7 @@ func (x *StateRestoreEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StateRestoreEvent.ProtoReflect.Descriptor instead.
 func (*StateRestoreEvent) Descriptor() ([]byte, []int) {
-	return file_client_gateway_proto_rawDescGZIP(), []int{8}
+	return file_client_gateway_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *StateRestoreEvent) GetService() string {
@@ -1005,10 +1204,19 @@ const file_client_gateway_proto_rawDesc = "" +
 	"session_id\x18\x02 \x01(\tR\tsessionId\x12!\n" +
 	"\fresume_token\x18\x03 \x01(\tR\vresumeToken\x12)\n" +
 	"\x10connection_epoch\x18\x04 \x01(\x04R\x0fconnectionEpoch\x12\x1b\n" +
-	"\tplayer_id\x18\x05 \x01(\tR\bplayerId\"=\n" +
-	"\rErrorResponse\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\rR\x04code\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x82\x03\n" +
+	"\tplayer_id\x18\x05 \x01(\tR\bplayerId\"\xb2\x01\n" +
+	"\rErrorResponse\x12;\n" +
+	"\x04code\x18\x01 \x01(\x0e2'.game01.client.gateway.GatewayErrorCodeR\x04code\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1c\n" +
+	"\tretryable\x18\x03 \x01(\bR\tretryable\x12,\n" +
+	"\x12retry_after_millis\x18\x04 \x01(\x04R\x10retryAfterMillis\"y\n" +
+	"\x15SessionPreemptedEvent\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12)\n" +
+	"\x10connection_epoch\x18\x02 \x01(\x04R\x0fconnectionEpoch\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"L\n" +
+	"\x14GatewayDrainingEvent\x124\n" +
+	"\x16reconnect_after_millis\x18\x01 \x01(\x04R\x14reconnectAfterMillis\"\x82\x03\n" +
 	"\x11StateRestoreEvent\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\x12#\n" +
@@ -1018,7 +1226,7 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\x04mode\x18\x06 \x01(\x0e2\".game01.client.gateway.RestoreModeR\x04mode\x12,\n" +
 	"\x12base_state_version\x18\a \x01(\x04R\x10baseStateVersion\x12J\n" +
 	"\fpayload_type\x18\b \x01(\x0e2'.game01.client.gateway.StatePayloadTypeR\vpayloadType\x12%\n" +
-	"\x0eschema_version\x18\t \x01(\rR\rschemaVersion*\xf9\x02\n" +
+	"\x0eschema_version\x18\t \x01(\rR\rschemaVersion*\xd6\x03\n" +
 	"\x0fClientMessageId\x12!\n" +
 	"\x1dCLIENT_MESSAGE_ID_UNSPECIFIED\x10\x00\x12#\n" +
 	"\x1fCLIENT_MESSAGE_ID_LOGIN_REQUEST\x10\x01\x12$\n" +
@@ -1027,7 +1235,9 @@ const file_client_gateway_proto_rawDesc = "" +
 	" CLIENT_MESSAGE_ID_LOGIN_RESPONSE\x10e\x12%\n" +
 	"!CLIENT_MESSAGE_ID_RESUME_RESPONSE\x10f\x12,\n" +
 	"(CLIENT_MESSAGE_ID_REFRESH_LOGIN_RESPONSE\x10g\x12)\n" +
-	"%CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT\x10h\x12%\n" +
+	"%CLIENT_MESSAGE_ID_STATE_RESTORE_EVENT\x10h\x12-\n" +
+	")CLIENT_MESSAGE_ID_SESSION_PREEMPTED_EVENT\x10i\x12,\n" +
+	"(CLIENT_MESSAGE_ID_GATEWAY_DRAINING_EVENT\x10j\x12%\n" +
 	" CLIENT_MESSAGE_ID_ERROR_RESPONSE\x10\x84\a*\xc8\x01\n" +
 	"\fAuthProvider\x12\x1d\n" +
 	"\x19AUTH_PROVIDER_UNSPECIFIED\x10\x00\x12\x17\n" +
@@ -1036,7 +1246,20 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\x13AUTH_PROVIDER_APPLE\x10\x03\x12\x18\n" +
 	"\x14AUTH_PROVIDER_GOOGLE\x10\x04\x12\x18\n" +
 	"\x14AUTH_PROVIDER_WECHAT\x10\x05\x12\x1a\n" +
-	"\x16AUTH_PROVIDER_PASSWORD\x10\x06*S\n" +
+	"\x16AUTH_PROVIDER_PASSWORD\x10\x06*\xcd\x03\n" +
+	"\x10GatewayErrorCode\x12\"\n" +
+	"\x1eGATEWAY_ERROR_CODE_UNSPECIFIED\x10\x00\x12&\n" +
+	"\"GATEWAY_ERROR_CODE_INVALID_REQUEST\x10\x01\x12,\n" +
+	"(GATEWAY_ERROR_CODE_AUTHENTICATION_FAILED\x10\x02\x12&\n" +
+	"\"GATEWAY_ERROR_CODE_SESSION_INVALID\x10\x03\x12*\n" +
+	"&GATEWAY_ERROR_CODE_UNSUPPORTED_MESSAGE\x10\x04\x12%\n" +
+	"!GATEWAY_ERROR_CODE_REFRESH_FAILED\x10\x05\x12)\n" +
+	"%GATEWAY_ERROR_CODE_PLAYER_UNAVAILABLE\x10\x06\x12*\n" +
+	"&GATEWAY_ERROR_CODE_SERVICE_UNAVAILABLE\x10\a\x12#\n" +
+	"\x1fGATEWAY_ERROR_CODE_RATE_LIMITED\x10\b\x12'\n" +
+	"#GATEWAY_ERROR_CODE_GATEWAY_DRAINING\x10\t\x12\x1f\n" +
+	"\x1bGATEWAY_ERROR_CODE_INTERNAL\x10\n" +
+	"*S\n" +
 	"\vRestoreMode\x12\x15\n" +
 	"\x11RESTORE_MODE_FULL\x10\x00\x12\x16\n" +
 	"\x12RESTORE_MODE_DELTA\x10\x01\x12\x15\n" +
@@ -1059,35 +1282,39 @@ func file_client_gateway_proto_rawDescGZIP() []byte {
 	return file_client_gateway_proto_rawDescData
 }
 
-var file_client_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_client_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_client_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_client_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_client_gateway_proto_goTypes = []any{
-	(ClientMessageId)(0),         // 0: game01.client.gateway.ClientMessageId
-	(AuthProvider)(0),            // 1: game01.client.gateway.AuthProvider
-	(RestoreMode)(0),             // 2: game01.client.gateway.RestoreMode
-	(StatePayloadType)(0),        // 3: game01.client.gateway.StatePayloadType
-	(*Envelope)(nil),             // 4: game01.client.gateway.Envelope
-	(*LoginRequest)(nil),         // 5: game01.client.gateway.LoginRequest
-	(*LoginResponse)(nil),        // 6: game01.client.gateway.LoginResponse
-	(*RefreshLoginRequest)(nil),  // 7: game01.client.gateway.RefreshLoginRequest
-	(*RefreshLoginResponse)(nil), // 8: game01.client.gateway.RefreshLoginResponse
-	(*ResumeRequest)(nil),        // 9: game01.client.gateway.ResumeRequest
-	(*ResumeResponse)(nil),       // 10: game01.client.gateway.ResumeResponse
-	(*ErrorResponse)(nil),        // 11: game01.client.gateway.ErrorResponse
-	(*StateRestoreEvent)(nil),    // 12: game01.client.gateway.StateRestoreEvent
-	nil,                          // 13: game01.client.gateway.ResumeRequest.StateVersionsEntry
+	(ClientMessageId)(0),          // 0: game01.client.gateway.ClientMessageId
+	(AuthProvider)(0),             // 1: game01.client.gateway.AuthProvider
+	(GatewayErrorCode)(0),         // 2: game01.client.gateway.GatewayErrorCode
+	(RestoreMode)(0),              // 3: game01.client.gateway.RestoreMode
+	(StatePayloadType)(0),         // 4: game01.client.gateway.StatePayloadType
+	(*Envelope)(nil),              // 5: game01.client.gateway.Envelope
+	(*LoginRequest)(nil),          // 6: game01.client.gateway.LoginRequest
+	(*LoginResponse)(nil),         // 7: game01.client.gateway.LoginResponse
+	(*RefreshLoginRequest)(nil),   // 8: game01.client.gateway.RefreshLoginRequest
+	(*RefreshLoginResponse)(nil),  // 9: game01.client.gateway.RefreshLoginResponse
+	(*ResumeRequest)(nil),         // 10: game01.client.gateway.ResumeRequest
+	(*ResumeResponse)(nil),        // 11: game01.client.gateway.ResumeResponse
+	(*ErrorResponse)(nil),         // 12: game01.client.gateway.ErrorResponse
+	(*SessionPreemptedEvent)(nil), // 13: game01.client.gateway.SessionPreemptedEvent
+	(*GatewayDrainingEvent)(nil),  // 14: game01.client.gateway.GatewayDrainingEvent
+	(*StateRestoreEvent)(nil),     // 15: game01.client.gateway.StateRestoreEvent
+	nil,                           // 16: game01.client.gateway.ResumeRequest.StateVersionsEntry
 }
 var file_client_gateway_proto_depIdxs = []int32{
 	0,  // 0: game01.client.gateway.Envelope.message_id:type_name -> game01.client.gateway.ClientMessageId
 	1,  // 1: game01.client.gateway.LoginRequest.provider:type_name -> game01.client.gateway.AuthProvider
-	13, // 2: game01.client.gateway.ResumeRequest.state_versions:type_name -> game01.client.gateway.ResumeRequest.StateVersionsEntry
-	2,  // 3: game01.client.gateway.StateRestoreEvent.mode:type_name -> game01.client.gateway.RestoreMode
-	3,  // 4: game01.client.gateway.StateRestoreEvent.payload_type:type_name -> game01.client.gateway.StatePayloadType
-	5,  // [5:5] is the sub-list for method output_type
-	5,  // [5:5] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	16, // 2: game01.client.gateway.ResumeRequest.state_versions:type_name -> game01.client.gateway.ResumeRequest.StateVersionsEntry
+	2,  // 3: game01.client.gateway.ErrorResponse.code:type_name -> game01.client.gateway.GatewayErrorCode
+	3,  // 4: game01.client.gateway.StateRestoreEvent.mode:type_name -> game01.client.gateway.RestoreMode
+	4,  // 5: game01.client.gateway.StateRestoreEvent.payload_type:type_name -> game01.client.gateway.StatePayloadType
+	6,  // [6:6] is the sub-list for method output_type
+	6,  // [6:6] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_client_gateway_proto_init() }
@@ -1100,8 +1327,8 @@ func file_client_gateway_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_client_gateway_proto_rawDesc), len(file_client_gateway_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   10,
+			NumEnums:      5,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

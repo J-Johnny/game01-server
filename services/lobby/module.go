@@ -29,11 +29,15 @@ type Module struct {
 	assets    repository.AssetRepository
 	ledger    repository.LedgerRepository
 	snapshots repository.SnapshotRepository
+	lifecycle *servicecommon.SessionLifecycleConsumer
 	initErr   error
 }
 
 func NewModule(deps app.Dependencies) *Module {
-	module := &Module{Module: servicecommon.NewModule("lobby", internalpb.ServiceType_SERVICE_TYPE_LOBBY, deps)}
+	module := &Module{
+		Module:    servicecommon.NewModule("lobby", internalpb.ServiceType_SERVICE_TYPE_LOBBY, deps),
+		lifecycle: servicecommon.NewSessionLifecycleConsumer(),
+	}
 	driverResources, ok := deps.Mongo.(commonmongo.DriverResources)
 	if !ok || driverResources.DriverClient() == nil || driverResources.DriverDatabase() == nil {
 		module.initErr = fmt.Errorf("official MongoDB Driver resources are required")
@@ -70,5 +74,8 @@ func (m *Module) RegisterInternal(router *streaming.Router) {
 	m.Module.RegisterInternal(router)
 	if m.component != nil {
 		m.component.RegisterInternal(router)
+	}
+	if m.lifecycle != nil {
+		m.lifecycle.Register(router, internalpb.ServiceType_SERVICE_TYPE_LOBBY)
 	}
 }

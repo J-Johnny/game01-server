@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package game01.internal;
+
+option go_package = "server/proto/gen/internalpb;internalpb";
+
+enum SessionLifecycleType {
+  SESSION_LIFECYCLE_TYPE_UNSPECIFIED = 0;
+  SESSION_LIFECYCLE_TYPE_CONNECTED = 1;
+  SESSION_LIFECYCLE_TYPE_DISCONNECTED = 2;
+  SESSION_LIFECYCLE_TYPE_RESUMED = 3;
+  SESSION_LIFECYCLE_TYPE_EXPIRED = 4;
+  SESSION_LIFECYCLE_TYPE_PREEMPTED = 5;
+}
+
+message SessionLifecycleEvent {
+  string event_id = 1;
+  SessionLifecycleType type = 2;
+  string session_id = 3;
+  string account_id = 4;
+  string player_id = 5;
+  string connection_id = 6;
+  uint64 connection_epoch = 7;
+  string gateway_instance_id = 8;
+  int64 occurred_at_unix_millis = 9;
+}

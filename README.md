@@ -111,7 +111,7 @@ docker compose logs -f gateway gateway-2 usercenter
 docker compose up --build -d nginx gateway gateway-2 usercenter redis mongo etcd
 ```
 
-容器化 Nginx 配置位于 `nginx/nginx.conf`，默认随 Compose 启动；本地 Nginx 配置位于 `../nginx-1.31.4/conf/nginx.conf`。切换到本地 Nginx 前先停止 Compose 的 `nginx` 容器，并启动两个 Gateway：
+容器化 Nginx 配置位于 `nginx/nginx.conf`，默认随 Compose 启动，并使用 Docker DNS 动态解析 Gateway 地址，支持容器重建与扩缩容；本地 Nginx 配置位于 `../nginx-1.31.4/conf/nginx.conf`。切换到本地 Nginx 前先停止 Compose 的 `nginx` 容器，并启动两个 Gateway：
 
 ```powershell
 docker compose stop nginx
@@ -148,7 +148,7 @@ docker compose up --build --force-recreate -d gateway usercenter
 
 默认 Gateway 入口地址为 `http://localhost:8080`，WebSocket 地址为 `ws://localhost:8080/ws`，也可以通过 `GAME_GATEWAY_HTTP_PORT` 修改 Compose Nginx 宿主机端口。使用本地 Nginx 时，Gateway 后端端口由 `GAME_GATEWAY_BACKEND_1_PORT`（默认 `18081`）和 `GAME_GATEWAY_BACKEND_2_PORT`（默认 `18082`）控制，仅用于本机反向代理，不应在生产环境直接暴露。
 
-Gateway 可靠性配置位于 `gateway` 配置段：`rate_limit_burst`、`rate_limit_per_second`、`retry_attempts`、`circuit_failures` 和 `circuit_reset_timeout`。
+Gateway 可靠性配置位于 `gateway` 配置段：`rate_limit_burst`、`rate_limit_per_second`、`retry_attempts`、`circuit_failures`、`circuit_reset_timeout` 和 `drain_timeout`。收到 `SIGTERM` 后，Gateway 会先将 `/readyz` 置为 `503`、从 etcd 注销，再向存量客户端发送排空事件；等待 `drain_timeout` 后才关闭仍存在的 WebSocket。Compose Nginx 会对 WebSocket 握手的 `503` 自动尝试另一个 Gateway。容器的 `stop_grace_period` 必须大于该值。
 
 ### Production
 
@@ -173,6 +173,20 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 ```powershell
 $env:GAME_E2E_FAULT_INJECTION = "1"
 go test ./integration -run TestGatewayUserCenterFaultInjection -count=1 -v
+```
+
+验证 Gateway 到 Lobby/Battle 的会话生命周期投递（需要 Gateway、UserCenter、Lobby、Battle、Redis、MongoDB 和 etcd 均运行）：
+
+```powershell
+$env:GAME_E2E_GATEWAY_LIFECYCLE = "1"
+go test ./integration -run TestGatewaySessionLifecycleDelivery -count=1 -v
+```
+
+验证 Gateway 排空（测试会临时停止并恢复 `gateway`，验证 `/readyz=503` 和客户端排空事件）：
+
+```powershell
+$env:GAME_E2E_GATEWAY_DRAIN = "1"
+go test ./integration -run TestGatewayDrainNotifiesClientsAndStopsAccepting -count=1 -v
 ```
 
 幂等请求在执行期间会自动续租；UserCenter 启动时会清理已过期的 pending 记录，使业务事务已提交但进程在幂等 Complete 前崩溃的请求可以在下一次重试时重新执行并完成幂等记录。

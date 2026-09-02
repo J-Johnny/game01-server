@@ -18,7 +18,7 @@ func TestWebSocketBinaryProtocolValidation(t *testing.T) {
 		name          string
 		payload       []byte
 		requestID     uint64
-		wantCode      uint32
+		wantCode      gatewaypb.GatewayErrorCode
 		wantRequestID uint64
 		wantMessage   string
 	}{
@@ -134,6 +134,43 @@ func TestWebSocketDisconnectMarksBoundSessionReconnecting(t *testing.T) {
 		t.Fatalf("get disconnected session: %v", err)
 	}
 	t.Fatalf("session was not marked reconnecting: %+v", record)
+}
+
+func TestWebSocketRateLimitReturnsRetryablePublicError(t *testing.T) {
+	router := gin.New()
+	handler := NewHandler(NewDispatcher(RejectingAuthenticator{}, nil))
+	handler.SetRateLimit(1, 1)
+	handler.RegisterRoutes(router)
+	server := httptest.NewServer(router)
+	defer server.Close()
+	ws := dialWebSocketTestServer(t, server)
+	defer ws.Close()
+
+	request := marshalProtocolEnvelope(t, &gatewaypb.Envelope{MessageId: MessageLoginRequest, RequestId: 1})
+	if err := ws.WriteMessage(websocket.BinaryMessage, request); err != nil {
+		t.Fatalf("write initial request: %v", err)
+	}
+	if _, _, err := ws.ReadMessage(); err != nil {
+		t.Fatalf("read initial response: %v", err)
+	}
+	if err := ws.WriteMessage(websocket.BinaryMessage, request); err != nil {
+		t.Fatalf("write rate-limited request: %v", err)
+	}
+	_, responseBytes, err := ws.ReadMessage()
+	if err != nil {
+		t.Fatalf("read rate-limited response: %v", err)
+	}
+	response := &gatewaypb.Envelope{}
+	if err := proto.Unmarshal(responseBytes, response); err != nil {
+		t.Fatalf("unmarshal rate-limited envelope: %v", err)
+	}
+	publicError := &gatewaypb.ErrorResponse{}
+	if err := proto.Unmarshal(response.Payload, publicError); err != nil {
+		t.Fatalf("unmarshal rate-limited error: %v", err)
+	}
+	if response.RequestId != 1 || publicError.Code != ErrorRateLimited || !publicError.Retryable || publicError.RetryAfterMillis == 0 {
+		t.Fatalf("unexpected rate-limited error: envelope=%s error=%s", response, publicError)
+	}
 }
 
 func newWebSocketProtocolTestServer(t *testing.T) *httptest.Server {

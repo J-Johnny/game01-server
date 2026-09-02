@@ -143,8 +143,20 @@ func main() {
 
 	stop, c := context.WithTimeout(context.Background(), cfg.App.ShutdownTimeout)
 	defer c()
+	for _, module := range started {
+		if draining, ok := module.(app.DrainingModule); ok {
+			draining.BeginDrain()
+		}
+	}
 	for i := len(registrations) - 1; i >= 0; i-- {
 		_ = registrations[i]()
+	}
+	for _, module := range started {
+		if draining, ok := module.(app.DrainingModule); ok {
+			if err := draining.Drain(stop); err != nil {
+				logger.Warn("drain module", "service", module.Name(), "error", err)
+			}
+		}
 	}
 	stopGRPC(stop, grpcServer)
 	_ = srv.Shutdown(stop)

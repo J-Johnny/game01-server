@@ -24,13 +24,18 @@ type Module struct {
 	*servicecommon.Module
 	handler       *Handler
 	ready         atomic.Bool
+	draining      atomic.Bool
 	preemptCancel context.CancelFunc
+	lifecycle     *sessionLifecyclePublisher
+	drainTimeout  time.Duration
 }
 
 type preemptEvent struct {
-	ConnectionID string `json:"connection_id"`
-	SessionID    string `json:"session_id"`
-	AccountID    string `json:"account_id"`
+	ConnectionID      string `json:"connection_id"`
+	SessionID         string `json:"session_id"`
+	AccountID         string `json:"account_id"`
+	ConnectionEpoch   uint64 `json:"connection_epoch"`
+	GatewayInstanceID string `json:"gateway_instance_id"`
 }
 
 func NewModule(deps app.Dependencies) *Module {
@@ -53,20 +58,40 @@ func NewModule(deps app.Dependencies) *Module {
 		return base.Client("lobby")
 	})
 	dispatcher := NewDispatcher(authenticator, manager, players)
+	lifecyclePublisher := newSessionLifecyclePublisher(func(service string) (*streaming.Client, bool) {
+		return base.Client(service)
+	}, deps.Metrics, reliability.RetryPolicy{
+		MaxAttempts:  deps.Config.Gateway.RetryAttempts,
+		InitialDelay: 50 * time.Millisecond,
+		MaxDelay:     500 * time.Millisecond,
+		ShouldRetry: func(error) bool {
+			return true
+		},
+	})
 	module := &Module{
-		Module:  base,
-		handler: NewHandler(dispatcher, manager),
+		Module:       base,
+		handler:      NewHandler(dispatcher, manager),
+		lifecycle:    lifecyclePublisher,
+		drainTimeout: deps.Config.Gateway.DrainTimeout,
 	}
 	dispatcher.SetRestoreHandler(module.restoreState)
+	dispatcher.SetErrorMapper(NewErrorMapper(deps.Metrics))
+	manager.SetLifecycleHandler(lifecyclePublisher.Publish)
 	manager.SetPreemptHandler(func(record session.Record) {
-		if connection, ok := module.handler.connections.Load(record.ConnectionID); ok {
-			connection.(*Connection).Close()
-		}
-		event, _ := json.Marshal(preemptEvent{ConnectionID: record.ConnectionID, SessionID: record.SessionID, AccountID: record.AccountID})
+		module.handler.Preempt(record)
+		event, _ := json.Marshal(preemptEvent{
+			ConnectionID:      record.ConnectionID,
+			SessionID:         record.SessionID,
+			AccountID:         record.AccountID,
+			ConnectionEpoch:   record.ConnectionEpoch,
+			GatewayInstanceID: record.GatewayInstanceID,
+		})
 		_ = deps.Redis.Publish(context.Background(), "game01:gateway:preempt", event).Err()
 	})
 	module.handler.SetRateLimit(deps.Config.Gateway.RateLimitBurst, deps.Config.Gateway.RateLimitPerSecond)
 	module.handler.SetRateLimitObserver(deps.Metrics.RateLimitObserver("websocket_connection"))
+	module.handler.SetErrorMapper(NewErrorMapper(deps.Metrics))
+	module.handler.SetConnectionObserver(deps.Metrics.SetGatewayConnections)
 	module.handler.SetAccepting(module.IsReady)
 	return module
 }
@@ -179,6 +204,9 @@ func (m *Module) Stop(ctx context.Context) error {
 	if m.preemptCancel != nil {
 		m.preemptCancel()
 	}
+	if m.lifecycle != nil {
+		m.lifecycle.Close()
+	}
 	return m.Module.Stop(ctx)
 }
 
@@ -200,14 +228,40 @@ func (m *Module) watchPreempt(ctx context.Context) {
 			}
 			var event preemptEvent
 			if json.Unmarshal([]byte(message.Payload), &event) == nil {
-				if connection, exists := m.handler.connections.Load(event.ConnectionID); exists {
-					connection.(*Connection).Close()
-				}
+				m.handler.Preempt(session.Record{
+					SessionID:       event.SessionID,
+					AccountID:       event.AccountID,
+					ConnectionID:    event.ConnectionID,
+					ConnectionEpoch: event.ConnectionEpoch,
+				})
 			}
 		}
 	}
 }
 
 func (m *Module) IsReady() bool {
-	return m.ready.Load()
+	return m.ready.Load() && !m.draining.Load()
+}
+
+func (m *Module) BeginDrain() {
+	if m.draining.CompareAndSwap(false, true) {
+		m.ready.Store(false)
+	}
+}
+
+func (m *Module) Drain(ctx context.Context) error {
+	if !m.draining.Load() {
+		return nil
+	}
+	m.handler.NotifyDraining(m.drainTimeout)
+	timer := time.NewTimer(m.drainTimeout)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		m.handler.CloseAll()
+		return nil
+	case <-ctx.Done():
+		m.handler.CloseAll()
+		return ctx.Err()
+	}
 }

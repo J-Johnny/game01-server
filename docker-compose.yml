@@ -4,6 +4,7 @@ x-game-server: &game-server
     dockerfile: Dockerfile
   image: game01-server:local
   restart: unless-stopped
+  stop_grace_period: 30s
   depends_on:
     redis:
       condition: service_healthy
