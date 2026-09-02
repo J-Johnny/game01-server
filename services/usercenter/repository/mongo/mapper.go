@@ -15,7 +15,7 @@ func accountDocumentFromDomain(account *domain.Account) (accountDocument, error)
 	}
 	return accountDocument{
 		AccountID: account.ID,
-		PlayerIDs: append([]string(nil), account.PlayerIDs...),
+		PlayerIDs: cloneStrings(account.PlayerIDs),
 		CreatedAt: account.CreatedAt,
 		UpdatedAt: account.UpdatedAt,
 	}, nil
@@ -24,7 +24,7 @@ func accountDocumentFromDomain(account *domain.Account) (accountDocument, error)
 func accountDomainFromDocument(document accountDocument, identities []identityDocument) (domain.Account, error) {
 	account := domain.Account{
 		ID:         document.AccountID,
-		PlayerIDs:  append([]string(nil), document.PlayerIDs...),
+		PlayerIDs:  cloneStrings(document.PlayerIDs),
 		CreatedAt:  document.CreatedAt,
 		UpdatedAt:  document.UpdatedAt,
 		Identities: make([]domain.Identity, 0, len(identities)),
@@ -144,4 +144,10 @@ func cloneTime(value *time.Time) *time.Time {
 	}
 	cloned := *value
 	return &cloned
+}
+
+func cloneStrings(values []string) []string {
+	cloned := make([]string, len(values))
+	copy(cloned, values)
+	return cloned
 }

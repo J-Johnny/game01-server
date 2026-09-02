@@ -40,7 +40,7 @@ func TestPasswordLoginOverWebSocketThroughUserCenterStreaming(t *testing.T) {
 	authenticator := NewUserCenterAuthenticator(func() (*streaming.Client, bool) {
 		return streamClient, true
 	})
-	dispatcher := NewDispatcher(authenticator, session.NewManager(session.NewMemoryStore(), "gateway-integration", time.Hour, time.Minute))
+	dispatcher := NewDispatcher(authenticator, session.NewManager(session.NewMemoryStore(), "gateway-integration", time.Hour, time.Minute), staticPlayerResolver{})
 	handler := NewHandler(dispatcher)
 	router := gin.New()
 	handler.RegisterRoutes(router)
@@ -110,7 +110,7 @@ func TestLoginOverWebSocketReturnsAuthenticationError(t *testing.T) {
 
 	dispatcher := NewDispatcher(NewUserCenterAuthenticator(func() (*streaming.Client, bool) {
 		return streamClient, true
-	}), session.NewManager(session.NewMemoryStore(), "gateway-integration", time.Hour, time.Minute))
+	}), session.NewManager(session.NewMemoryStore(), "gateway-integration", time.Hour, time.Minute), staticPlayerResolver{})
 	router := gin.New()
 	NewHandler(dispatcher).RegisterRoutes(router)
 	httpServer := httptest.NewServer(router)
@@ -191,4 +191,10 @@ func gatewayLoginRequestGuest(installID string) gatewaypb.LoginRequest {
 
 func gatewayEnvelopeLogin(payload []byte, requestID uint64) gatewaypb.Envelope {
 	return gatewaypb.Envelope{MessageId: MessageLoginRequest, RequestId: requestID, Payload: payload}
+}
+
+type staticPlayerResolver struct{}
+
+func (staticPlayerResolver) EnsurePlayer(_ context.Context, accountID string) (string, error) {
+	return "player-" + accountID, nil
 }

@@ -14,6 +14,8 @@ enum UserCenterMessageId {
   USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE = 1103;
   USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST = 1004;
   USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE = 1104;
+  USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST = 1005;
+  USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE = 1105;
 }
 
 message GuestAuthenticateRequest {
@@ -61,4 +63,14 @@ message PasswordAuthenticateResponse {
   string account_id = 1;
   string refresh_token = 2;
   int64 refresh_token_expire_at_unix = 3;
+}
+
+message LinkPlayerRequest {
+  string account_id = 1;
+  string player_id = 2;
+}
+
+message LinkPlayerResponse {
+  string account_id = 1;
+  string player_id = 2;
 }

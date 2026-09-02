@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package game01.internal;
+
+option go_package = "server/proto/gen/internalpb;internalpb";
+
+enum LobbyMessageId {
+  LOBBY_MESSAGE_ID_UNSPECIFIED = 0;
+  LOBBY_MESSAGE_ID_ENSURE_PLAYER_REQUEST = 3001;
+  LOBBY_MESSAGE_ID_ENSURE_PLAYER_RESPONSE = 3101;
+  LOBBY_MESSAGE_ID_SETTLEMENT_REQUEST = 3002;
+  LOBBY_MESSAGE_ID_SETTLEMENT_RESPONSE = 3102;
+}
+
+message EnsurePlayerRequest {
+  string account_id = 1;
+}
+
+message EnsurePlayerResponse {
+  string account_id = 1;
+  string player_id = 2;
+  bool created = 3;
+}
+
+message SettlementRequest {
+  string settlement_id = 1;
+  string player_id = 2;
+  string asset_type = 3;
+  int64 delta = 4;
+  string reason = 5;
+  string source = 6;
+}
+
+message SettlementResponse {
+  string settlement_id = 1;
+  string player_id = 2;
+  string asset_type = 3;
+  int64 balance = 4;
+  uint64 asset_version = 5;
+  bool replayed = 6;
+}
+
+message LobbyPlayerSnapshot {
+  string player_id = 1;
+  string account_id = 2;
+  string nickname = 3;
+  string region = 4;
+  uint64 profile_version = 5;
+  uint64 asset_version = 6;
+  map<string, int64> currency = 7;
+}

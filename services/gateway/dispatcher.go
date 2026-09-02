@@ -28,6 +28,7 @@ const (
 	ErrorResume          uint32 = 3
 	ErrorUnsupported     uint32 = 4
 	ErrorRefresh         uint32 = 5
+	ErrorPlayer          uint32 = 6
 )
 
 type Authenticator interface {
@@ -60,18 +61,23 @@ type Dispatcher struct {
 	sessions      *session.Manager
 	now           func() time.Time
 	restore       func(context.Context, *Connection, string, string)
+	players       PlayerResolver
 }
 
 func (d *Dispatcher) SetRestoreHandler(handler func(context.Context, *Connection, string, string)) {
 	d.restore = handler
 }
 
-func NewDispatcher(authenticator Authenticator, sessions *session.Manager) *Dispatcher {
-	return &Dispatcher{
+func NewDispatcher(authenticator Authenticator, sessions *session.Manager, players ...PlayerResolver) *Dispatcher {
+	dispatcher := &Dispatcher{
 		authenticator: authenticator,
 		sessions:      sessions,
 		now:           time.Now,
 	}
+	if len(players) > 0 {
+		dispatcher.players = players[0]
+	}
+	return dispatcher
 }
 
 func (d *Dispatcher) Dispatch(ctx context.Context, connection *Connection, data []byte) error {
@@ -124,12 +130,16 @@ func (d *Dispatcher) login(ctx context.Context, connection *Connection, envelope
 		slog.Warn("gateway authentication failed", "protocol", "websocket", "connection_id", connection.ID, "request_id", envelope.RequestId, "provider", request.Provider.String(), "error", err)
 		return d.sendError(connection, envelope.RequestId, ErrorAuthentication, "authentication failed")
 	}
-	created, err := d.sessions.Create(ctx, authentication.AccountID, connection.ID, d.now())
+	playerID, err := d.ensurePlayer(ctx, authentication.AccountID)
+	if err != nil {
+		return d.sendError(connection, envelope.RequestId, ErrorPlayer, "player initialization failed")
+	}
+	created, err := d.sessions.Create(ctx, authentication.AccountID, connection.ID, d.now(), playerID)
 	if err != nil {
 		return err
 	}
 	connection.BindSession(created.Record.SessionID, created.Record.ConnectionEpoch)
-	return d.send(connection, MessageLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.LoginResponse{AccountId: created.Record.AccountID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
+	return d.send(connection, MessageLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.LoginResponse{AccountId: created.Record.AccountID, PlayerId: created.Record.PlayerID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
 }
 
 func (d *Dispatcher) refreshLogin(ctx context.Context, connection *Connection, envelope *gatewaypb.Envelope) error {
@@ -144,12 +154,23 @@ func (d *Dispatcher) refreshLogin(ctx context.Context, connection *Connection, e
 	if err != nil {
 		return d.sendError(connection, envelope.RequestId, ErrorRefresh, "refresh authentication failed")
 	}
-	created, err := d.sessions.Create(ctx, authentication.AccountID, connection.ID, d.now())
+	playerID, err := d.ensurePlayer(ctx, authentication.AccountID)
+	if err != nil {
+		return d.sendError(connection, envelope.RequestId, ErrorPlayer, "player initialization failed")
+	}
+	created, err := d.sessions.Create(ctx, authentication.AccountID, connection.ID, d.now(), playerID)
 	if err != nil {
 		return err
 	}
 	connection.BindSession(created.Record.SessionID, created.Record.ConnectionEpoch)
-	return d.send(connection, MessageRefreshLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.RefreshLoginResponse{AccountId: created.Record.AccountID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
+	return d.send(connection, MessageRefreshLoginResponse, envelope.RequestId, created.Record.SessionID, &gatewaypb.RefreshLoginResponse{AccountId: created.Record.AccountID, PlayerId: created.Record.PlayerID, SessionId: created.Record.SessionID, ResumeToken: created.ResumeToken, ConnectionEpoch: created.Record.ConnectionEpoch, RefreshToken: authentication.RefreshToken, RefreshTokenExpireAtUnix: authentication.RefreshTokenExpireAt.Unix()})
+}
+
+func (d *Dispatcher) ensurePlayer(ctx context.Context, accountID string) (string, error) {
+	if d.players == nil {
+		return "", errors.New("lobby player resolver is not configured")
+	}
+	return d.players.EnsurePlayer(ctx, accountID)
 }
 
 func (d *Dispatcher) resume(ctx context.Context, connection *Connection, envelope *gatewaypb.Envelope) error {

@@ -47,7 +47,10 @@ func NewModule(deps app.Dependencies) *Module {
 			return errors.Is(err, streaming.ErrConnectionClosed) || errors.Is(err, streaming.ErrRequestTimeout)
 		},
 	}, reliability.NewCircuitBreaker(deps.Config.Gateway.CircuitFailures, deps.Config.Gateway.CircuitReset))
-	dispatcher := NewDispatcher(authenticator, manager)
+	players := NewLobbyPlayerResolver(func() (*streaming.Client, bool) {
+		return base.Client("lobby")
+	})
+	dispatcher := NewDispatcher(authenticator, manager, players)
 	module := &Module{
 		Module:  base,
 		handler: NewHandler(dispatcher, manager),

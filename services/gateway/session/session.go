@@ -176,7 +176,7 @@ type Created struct {
 	ResumeToken string
 }
 
-func (m *Manager) Create(ctx context.Context, accountID string, connectionID string, now time.Time) (Created, error) {
+func (m *Manager) Create(ctx context.Context, accountID string, connectionID string, now time.Time, playerIDs ...string) (Created, error) {
 	sid, err := randomID()
 	if err != nil {
 		return Created{}, err
@@ -185,7 +185,11 @@ func (m *Manager) Create(ctx context.Context, accountID string, connectionID str
 	if err != nil {
 		return Created{}, err
 	}
-	r := Record{SessionID: sid, AccountID: accountID, GatewayInstanceID: m.gatewayID, ConnectionID: connectionID, ConnectionEpoch: 1, State: StateAuthenticated, ResumeTokenHash: hash(token), ExpireAt: now.Add(m.sessionTTL)}
+	playerID := ""
+	if len(playerIDs) > 0 {
+		playerID = playerIDs[0]
+	}
+	r := Record{SessionID: sid, AccountID: accountID, PlayerID: playerID, GatewayInstanceID: m.gatewayID, ConnectionID: connectionID, ConnectionEpoch: 1, State: StateAuthenticated, ResumeTokenHash: hash(token), ExpireAt: now.Add(m.sessionTTL)}
 	if err := m.store.Create(ctx, r); err != nil {
 		return Created{}, err
 	}

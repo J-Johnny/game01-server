@@ -2,33 +2,73 @@ package lobby
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/gin-gonic/gin"
-	"google.golang.org/protobuf/proto"
 	"server/common/app"
+	commonmongo "server/common/mongodb"
 	"server/common/streaming"
 	internalpb "server/proto/gen/internalpb"
 	servicecommon "server/services/common"
+	"server/services/lobby/components"
+	"server/services/lobby/repository"
+	mongorepository "server/services/lobby/repository/mongo"
 )
 
-type Module struct{ *servicecommon.Module }
+const (
+	PlayersCollection   = "players"
+	AssetsCollection    = "player_assets"
+	LedgerCollection    = "asset_ledger"
+	SnapshotsCollection = "player_snapshots"
+)
+
+type Module struct {
+	*servicecommon.Module
+	component *components.PlayerComponent
+	players   repository.PlayerRepository
+	assets    repository.AssetRepository
+	ledger    repository.LedgerRepository
+	snapshots repository.SnapshotRepository
+	initErr   error
+}
 
 func NewModule(deps app.Dependencies) *Module {
-	return &Module{
-		Module: servicecommon.NewModule("lobby", internalpb.ServiceType_SERVICE_TYPE_LOBBY, deps),
+	module := &Module{Module: servicecommon.NewModule("lobby", internalpb.ServiceType_SERVICE_TYPE_LOBBY, deps)}
+	driverResources, ok := deps.Mongo.(commonmongo.DriverResources)
+	if !ok || driverResources.DriverClient() == nil || driverResources.DriverDatabase() == nil {
+		module.initErr = fmt.Errorf("official MongoDB Driver resources are required")
+		return module
 	}
+	module.players = mongorepository.NewPlayerRepository(driverResources.DriverCollection(PlayersCollection))
+	module.assets = mongorepository.NewAssetRepository(driverResources.DriverCollection(AssetsCollection))
+	module.ledger = mongorepository.NewLedgerRepository(driverResources.DriverCollection(LedgerCollection))
+	module.snapshots = mongorepository.NewSnapshotRepository(driverResources.DriverCollection(SnapshotsCollection))
+	unitOfWork := commonmongo.NewMongoUnitOfWork(driverResources.DriverClient())
+	linker := components.NewUserCenterPlayerLinker(func() (*streaming.Client, bool) { return module.Client("usercenter") })
+	module.component = components.NewPlayerComponent(module.players, module.assets, module.ledger, module.snapshots, unitOfWork, linker)
+	return module
 }
 
-func (m *Module) RegisterInternal(router *streaming.Router) {
-	m.Module.RegisterInternal(router)
-	router.Register(internalpb.ServiceType_SERVICE_TYPE_LOBBY, uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_REQUEST), streaming.MessageHandlerFunc(m.restorePlayerState))
-}
-
-func (m *Module) restorePlayerState(_ context.Context, _ streaming.Peer, envelope *internalpb.InternalEnvelope) (*streaming.MessageResult, error) {
-	request := &internalpb.RestorePlayerStateRequest{}
-	if err := proto.Unmarshal(envelope.Payload, request); err != nil {
-		return nil, err
+func (m *Module) Start(ctx context.Context) error {
+	if m.initErr != nil {
+		return m.initErr
 	}
-	return &streaming.MessageResult{MessageID: uint32(internalpb.InternalMessageId_INTERNAL_MESSAGE_ID_RESTORE_PLAYER_STATE_RESPONSE), Message: &internalpb.RestorePlayerStateResponse{ServiceType: internalpb.ServiceType_SERVICE_TYPE_LOBBY, PlayerId: request.PlayerId, Available: false}}, nil
+	for _, item := range []struct {
+		name   string
+		ensure func(context.Context) error
+	}{{"players", m.players.EnsureIndexes}, {"assets", m.assets.EnsureIndexes}, {"ledger", m.ledger.EnsureIndexes}, {"snapshots", m.snapshots.EnsureIndexes}} {
+		if err := item.ensure(ctx); err != nil {
+			return fmt.Errorf("ensure %s indexes: %w", item.name, err)
+		}
+	}
+	return m.Module.Start(ctx)
 }
 
 func (m *Module) RegisterRoutes(gin.IRouter) {}
+
+func (m *Module) RegisterInternal(router *streaming.Router) {
+	m.Module.RegisterInternal(router)
+	if m.component != nil {
+		m.component.RegisterInternal(router)
+	}
+}

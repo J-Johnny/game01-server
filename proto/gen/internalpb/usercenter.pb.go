@@ -33,6 +33,8 @@ const (
 	UserCenterMessageId_USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE  UserCenterMessageId = 1103
 	UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST  UserCenterMessageId = 1004
 	UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE UserCenterMessageId = 1104
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST            UserCenterMessageId = 1005
+	UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE           UserCenterMessageId = 1105
 )
 
 // Enum value maps for UserCenterMessageId.
@@ -47,6 +49,8 @@ var (
 		1103: "USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE",
 		1004: "USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST",
 		1104: "USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE",
+		1005: "USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST",
+		1105: "USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE",
 	}
 	UserCenterMessageId_value = map[string]int32{
 		"USER_CENTER_MESSAGE_ID_UNSPECIFIED":                    0,
@@ -58,6 +62,8 @@ var (
 		"USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE":  1103,
 		"USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST":  1004,
 		"USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE": 1104,
+		"USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST":            1005,
+		"USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE":           1105,
 	}
 )
 
@@ -568,6 +574,110 @@ func (x *PasswordAuthenticateResponse) GetRefreshTokenExpireAtUnix() int64 {
 	return 0
 }
 
+type LinkPlayerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	PlayerId      string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkPlayerRequest) Reset() {
+	*x = LinkPlayerRequest{}
+	mi := &file_internal_usercenter_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkPlayerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkPlayerRequest) ProtoMessage() {}
+
+func (x *LinkPlayerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_usercenter_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkPlayerRequest.ProtoReflect.Descriptor instead.
+func (*LinkPlayerRequest) Descriptor() ([]byte, []int) {
+	return file_internal_usercenter_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *LinkPlayerRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *LinkPlayerRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+type LinkPlayerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	PlayerId      string                 `protobuf:"bytes,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LinkPlayerResponse) Reset() {
+	*x = LinkPlayerResponse{}
+	mi := &file_internal_usercenter_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LinkPlayerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LinkPlayerResponse) ProtoMessage() {}
+
+func (x *LinkPlayerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_usercenter_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LinkPlayerResponse.ProtoReflect.Descriptor instead.
+func (*LinkPlayerResponse) Descriptor() ([]byte, []int) {
+	return file_internal_usercenter_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *LinkPlayerResponse) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *LinkPlayerResponse) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
 var File_internal_usercenter_proto protoreflect.FileDescriptor
 
 const file_internal_usercenter_proto_rawDesc = "" +
@@ -611,7 +721,15 @@ const file_internal_usercenter_proto_rawDesc = "" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12>\n" +
-	"\x1crefresh_token_expire_at_unix\x18\x03 \x01(\x03R\x18refreshTokenExpireAtUnix*\x8f\x04\n" +
+	"\x1crefresh_token_expire_at_unix\x18\x03 \x01(\x03R\x18refreshTokenExpireAtUnix\"O\n" +
+	"\x11LinkPlayerRequest\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1b\n" +
+	"\tplayer_id\x18\x02 \x01(\tR\bplayerId\"P\n" +
+	"\x12LinkPlayerResponse\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1b\n" +
+	"\tplayer_id\x18\x02 \x01(\tR\bplayerId*\xf2\x04\n" +
 	"\x13UserCenterMessageId\x12&\n" +
 	"\"USER_CENTER_MESSAGE_ID_UNSPECIFIED\x10\x00\x126\n" +
 	"1USER_CENTER_MESSAGE_ID_GUEST_AUTHENTICATE_REQUEST\x10\xe9\a\x127\n" +
@@ -621,7 +739,9 @@ const file_internal_usercenter_proto_rawDesc = "" +
 	"3USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST\x10\xeb\a\x129\n" +
 	"4USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_RESPONSE\x10\xcf\b\x129\n" +
 	"4USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST\x10\xec\a\x12:\n" +
-	"5USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE\x10\xd0\bB(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
+	"5USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_RESPONSE\x10\xd0\b\x12/\n" +
+	"*USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST\x10\xed\a\x120\n" +
+	"+USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE\x10\xd1\bB(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
 
 var (
 	file_internal_usercenter_proto_rawDescOnce sync.Once
@@ -636,7 +756,7 @@ func file_internal_usercenter_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_usercenter_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_internal_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_internal_usercenter_proto_goTypes = []any{
 	(UserCenterMessageId)(0),             // 0: game01.internal.UserCenterMessageId
 	(*GuestAuthenticateRequest)(nil),     // 1: game01.internal.GuestAuthenticateRequest
@@ -647,6 +767,8 @@ var file_internal_usercenter_proto_goTypes = []any{
 	(*RevokeRefreshTokenResponse)(nil),   // 6: game01.internal.RevokeRefreshTokenResponse
 	(*PasswordAuthenticateRequest)(nil),  // 7: game01.internal.PasswordAuthenticateRequest
 	(*PasswordAuthenticateResponse)(nil), // 8: game01.internal.PasswordAuthenticateResponse
+	(*LinkPlayerRequest)(nil),            // 9: game01.internal.LinkPlayerRequest
+	(*LinkPlayerResponse)(nil),           // 10: game01.internal.LinkPlayerResponse
 }
 var file_internal_usercenter_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -667,7 +789,7 @@ func file_internal_usercenter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_usercenter_proto_rawDesc), len(file_internal_usercenter_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -88,6 +88,21 @@ func (c *DomainAuthComponent) RegisterInternal(router *streaming.Router) {
 	router.Register(internalpb.ServiceType_SERVICE_TYPE_USERCENTER, uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_REFRESH_AUTHENTICATE_REQUEST), streaming.MessageHandlerFunc(c.refreshAuthenticate))
 	router.Register(internalpb.ServiceType_SERVICE_TYPE_USERCENTER, uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_REVOKE_REFRESH_TOKEN_REQUEST), streaming.MessageHandlerFunc(c.revokeRefreshToken))
 	router.Register(internalpb.ServiceType_SERVICE_TYPE_USERCENTER, uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_PASSWORD_AUTHENTICATE_REQUEST), streaming.MessageHandlerFunc(c.passwordAuthenticate))
+	router.Register(internalpb.ServiceType_SERVICE_TYPE_USERCENTER, uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_REQUEST), streaming.MessageHandlerFunc(c.linkPlayer))
+}
+
+func (c *DomainAuthComponent) linkPlayer(ctx context.Context, _ streaming.Peer, envelope *internalpb.InternalEnvelope) (*streaming.MessageResult, error) {
+	request := &internalpb.LinkPlayerRequest{}
+	if err := proto.Unmarshal(envelope.Payload, request); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(request.AccountId) == "" || strings.TrimSpace(request.PlayerId) == "" {
+		return nil, errors.New("account_id and player_id are required")
+	}
+	if err := c.accounts.LinkPlayer(ctx, request.AccountId, request.PlayerId, c.now().UTC()); err != nil {
+		return nil, err
+	}
+	return &streaming.MessageResult{MessageID: uint32(internalpb.UserCenterMessageId_USER_CENTER_MESSAGE_ID_LINK_PLAYER_RESPONSE), Message: &internalpb.LinkPlayerResponse{AccountId: request.AccountId, PlayerId: request.PlayerId}}, nil
 }
 
 func (c *DomainAuthComponent) guestAuthenticate(ctx context.Context, _ streaming.Peer, envelope *internalpb.InternalEnvelope) (*streaming.MessageResult, error) {

@@ -309,6 +309,7 @@ type LoginResponse struct {
 	ConnectionEpoch          uint64                 `protobuf:"varint,4,opt,name=connection_epoch,json=connectionEpoch,proto3" json:"connection_epoch,omitempty"`
 	RefreshToken             string                 `protobuf:"bytes,5,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	RefreshTokenExpireAtUnix int64                  `protobuf:"varint,6,opt,name=refresh_token_expire_at_unix,json=refreshTokenExpireAtUnix,proto3" json:"refresh_token_expire_at_unix,omitempty"`
+	PlayerId                 string                 `protobuf:"bytes,7,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -385,6 +386,13 @@ func (x *LoginResponse) GetRefreshTokenExpireAtUnix() int64 {
 	return 0
 }
 
+func (x *LoginResponse) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
 type RefreshLoginRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	RefreshToken   string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
@@ -453,6 +461,7 @@ type RefreshLoginResponse struct {
 	ConnectionEpoch          uint64                 `protobuf:"varint,4,opt,name=connection_epoch,json=connectionEpoch,proto3" json:"connection_epoch,omitempty"`
 	RefreshToken             string                 `protobuf:"bytes,5,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	RefreshTokenExpireAtUnix int64                  `protobuf:"varint,6,opt,name=refresh_token_expire_at_unix,json=refreshTokenExpireAtUnix,proto3" json:"refresh_token_expire_at_unix,omitempty"`
+	PlayerId                 string                 `protobuf:"bytes,7,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -527,6 +536,13 @@ func (x *RefreshLoginResponse) GetRefreshTokenExpireAtUnix() int64 {
 		return x.RefreshTokenExpireAtUnix
 	}
 	return 0
+}
+
+func (x *RefreshLoginResponse) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
 }
 
 type ResumeRequest struct {
@@ -807,7 +823,7 @@ const file_client_gateway_proto_rawDesc = "" +
 	"install_id\x18\x03 \x01(\tR\tinstallId\x12\x1a\n" +
 	"\busername\x18\x04 \x01(\tR\busername\x12\x1a\n" +
 	"\bpassword\x18\x05 \x01(\tR\bpassword\x12'\n" +
-	"\x0fidempotency_key\x18\x06 \x01(\tR\x0eidempotencyKey\"\x80\x02\n" +
+	"\x0fidempotency_key\x18\x06 \x01(\tR\x0eidempotencyKey\"\x9d\x02\n" +
 	"\rLoginResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1d\n" +
@@ -816,12 +832,13 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\fresume_token\x18\x03 \x01(\tR\vresumeToken\x12)\n" +
 	"\x10connection_epoch\x18\x04 \x01(\x04R\x0fconnectionEpoch\x12#\n" +
 	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\x12>\n" +
-	"\x1crefresh_token_expire_at_unix\x18\x06 \x01(\x03R\x18refreshTokenExpireAtUnix\"\x82\x01\n" +
+	"\x1crefresh_token_expire_at_unix\x18\x06 \x01(\x03R\x18refreshTokenExpireAtUnix\x12\x1b\n" +
+	"\tplayer_id\x18\a \x01(\tR\bplayerId\"\x82\x01\n" +
 	"\x13RefreshLoginRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\x12\x1d\n" +
 	"\n" +
 	"install_id\x18\x02 \x01(\tR\tinstallId\x12'\n" +
-	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"\x87\x02\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"\xa4\x02\n" +
 	"\x14RefreshLoginResponse\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1d\n" +
@@ -830,7 +847,8 @@ const file_client_gateway_proto_rawDesc = "" +
 	"\fresume_token\x18\x03 \x01(\tR\vresumeToken\x12)\n" +
 	"\x10connection_epoch\x18\x04 \x01(\x04R\x0fconnectionEpoch\x12#\n" +
 	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\x12>\n" +
-	"\x1crefresh_token_expire_at_unix\x18\x06 \x01(\x03R\x18refreshTokenExpireAtUnix\"Q\n" +
+	"\x1crefresh_token_expire_at_unix\x18\x06 \x01(\x03R\x18refreshTokenExpireAtUnix\x12\x1b\n" +
+	"\tplayer_id\x18\a \x01(\tR\bplayerId\"Q\n" +
 	"\rResumeRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12!\n" +

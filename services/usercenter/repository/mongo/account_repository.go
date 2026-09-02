@@ -75,6 +75,13 @@ func (r *AccountRepository) LinkPlayer(ctx context.Context, accountID, playerID 
 	if accountID == "" || playerID == "" {
 		return domain.ErrInvalidAccount
 	}
+	// Normalize documents created before PlayerIDs was encoded as an array.
+	if _, err := r.collection.UpdateOne(ctx, bson.M{"account_id": accountID, "$or": bson.A{
+		bson.M{"player_ids": bson.M{"$exists": false}},
+		bson.M{"player_ids": nil},
+	}}, bson.M{"$set": bson.M{"player_ids": []string{}}}); err != nil {
+		return fmt.Errorf("normalize player links: %w", err)
+	}
 	result, err := r.collection.UpdateOne(ctx, bson.M{"account_id": accountID}, bson.M{"$addToSet": bson.M{"player_ids": playerID}, "$set": bson.M{"updated_at": now}})
 	if err != nil {
 		return fmt.Errorf("link player: %w", err)

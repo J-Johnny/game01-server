@@ -50,6 +50,7 @@ message LoginResponse {
   uint64 connection_epoch = 4;
   string refresh_token = 5;
   int64 refresh_token_expire_at_unix = 6;
+  string player_id = 7;
 }
 
 message RefreshLoginRequest {
@@ -65,6 +66,7 @@ message RefreshLoginResponse {
   uint64 connection_epoch = 4;
   string refresh_token = 5;
   int64 refresh_token_expire_at_unix = 6;
+  string player_id = 7;
 }
 
 message ResumeRequest {

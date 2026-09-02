@@ -10,13 +10,18 @@ import (
 	servicecommon "server/services/common"
 )
 
-type Module struct{ *servicecommon.Module }
+type Module struct {
+	*servicecommon.Module
+	settlements *LobbySettlementClient
+}
 
 func NewModule(deps app.Dependencies) *Module {
-	return &Module{
-		Module: servicecommon.NewModule("battle", internalpb.ServiceType_SERVICE_TYPE_BATTLE, deps),
-	}
+	module := &Module{Module: servicecommon.NewModule("battle", internalpb.ServiceType_SERVICE_TYPE_BATTLE, deps)}
+	module.settlements = NewLobbySettlementClient(func() (*streaming.Client, bool) { return module.Client("lobby") })
+	return module
 }
+
+func (m *Module) Settlements() *LobbySettlementClient { return m.settlements }
 
 func (m *Module) RegisterInternal(router *streaming.Router) {
 	m.Module.RegisterInternal(router)

@@ -77,7 +77,7 @@ common     -X-> services/*
 
 Redis 由 `common/redis` 统一创建并注入依赖，Gateway 会话存储使用 `services/gateway/session.RedisStore`。本地 Compose 会自动启动 Redis，并通过 `GAME_REDIS_ADDR` 指向容器服务。
 
-MongoDB 由 `common/mongodb` 统一创建并注入依赖。UserCenter 运行时使用官方 MongoDB Driver，通过领域 Repository 写入 `accounts`、`account_identities`、`refresh_tokens` 和 `idempotency_records` 独立集合；玩家档案、资产及结算数据应由 Lobby 的独立集合管理。Qmgo、旧模型和旧 Repository 已从运行时代码删除，不做历史数据迁移。旧 `user_center` 集合需要由运维人员显式执行一次性脚本删除，服务启动不会自动删库。
+MongoDB 由 `common/mongodb` 统一创建并注入依赖。UserCenter 运行时使用官方 MongoDB Driver，通过领域 Repository 写入 `accounts`、`account_identities`、`refresh_tokens` 和 `idempotency_records` 独立集合；Lobby 使用 `players`、`player_assets`、`asset_ledger` 和 `player_snapshots` 管理玩家档案、当前资产、结算账本与恢复快照。Lobby 的玩家初始化和结算使用 MongoDB Replica Set 本地事务；`settlement_id` 是不可变账本的唯一幂等键。Qmgo、旧模型和旧 Repository 已从运行时代码删除，不做历史数据迁移。旧 `user_center` 集合需要由运维人员显式执行一次性脚本删除，服务启动不会自动删库。
 
 删除旧 UserCenter 集合（执行前请确认 URI 和数据库）：
 
@@ -128,6 +128,7 @@ cd ..\nginx-1.31.4
 ```powershell
 $env:GAME_MONGO_REPLICA_URI = "mongodb://localhost:27017/?replicaSet=rs0&directConnection=true"
 go test ./services/usercenter/repository/mongo -run ReplicaSet -count=1
+go test ./services/lobby/components -run MongoReplicaSet -count=1
 ```
 
 启动日志后台面板（测试 Gateway/UserCenter 时）：
