@@ -178,7 +178,9 @@ func (h *Handler) Handle(c *gin.Context) {
 	h.observeConnectionCount(h.activeConnections.Add(1))
 	defer h.disconnectSession(conn)
 	defer h.connections.Delete(connectionID)
-	defer h.observeConnectionCount(h.activeConnections.Add(-1))
+	defer func() {
+		h.observeConnectionCount(h.activeConnections.Add(-1))
+	}()
 	slog.Info("websocket connected", "protocol", "websocket", "request_id", requestID(c), "connection_id", connectionID, "client_ip", c.ClientIP())
 	defer slog.Info("websocket disconnected", "protocol", "websocket", "request_id", requestID(c), "connection_id", connectionID)
 	go h.writePump(conn)

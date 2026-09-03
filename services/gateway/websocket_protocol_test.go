@@ -136,6 +136,35 @@ func TestWebSocketDisconnectMarksBoundSessionReconnecting(t *testing.T) {
 	t.Fatalf("session was not marked reconnecting: %+v", record)
 }
 
+func TestWebSocketConnectionObserverTracksActiveConnections(t *testing.T) {
+	counts := make(chan int, 8)
+	router := gin.New()
+	handler := NewHandler(NewDispatcher(RejectingAuthenticator{}, nil))
+	handler.SetConnectionObserver(func(count int) {
+		select {
+		case counts <- count:
+		default:
+		}
+	})
+	handler.RegisterRoutes(router)
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	first := dialWebSocketTestServer(t, server)
+	defer first.Close()
+	waitForConnectionCount(t, counts, 1)
+	second := dialWebSocketTestServer(t, server)
+	waitForConnectionCount(t, counts, 2)
+	if err := second.Close(); err != nil {
+		t.Fatalf("close second websocket: %v", err)
+	}
+	waitForConnectionCount(t, counts, 1)
+	if err := first.Close(); err != nil {
+		t.Fatalf("close first websocket: %v", err)
+	}
+	waitForConnectionCount(t, counts, 0)
+}
+
 func TestWebSocketRateLimitReturnsRetryablePublicError(t *testing.T) {
 	router := gin.New()
 	handler := NewHandler(NewDispatcher(RejectingAuthenticator{}, nil))
@@ -197,4 +226,20 @@ func marshalProtocolEnvelope(t *testing.T, envelope *gatewaypb.Envelope) []byte 
 		t.Fatalf("marshal protocol envelope: %v", err)
 	}
 	return payload
+}
+
+func waitForConnectionCount(t *testing.T, counts <-chan int, expected int) {
+	t.Helper()
+	timeout := time.NewTimer(time.Second)
+	defer timeout.Stop()
+	for {
+		select {
+		case count := <-counts:
+			if count == expected {
+				return
+			}
+		case <-timeout.C:
+			t.Fatalf("connection observer did not report %d", expected)
+		}
+	}
 }
