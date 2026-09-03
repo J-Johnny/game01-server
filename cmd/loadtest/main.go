@@ -49,6 +49,7 @@ func main() {
 	ramp := flag.Int("ramp-per-second", 10, "new connections per second")
 	duration := flag.Duration("duration", time.Minute, "test duration")
 	usernamePrefix := flag.String("username-prefix", "perf", "password login username prefix")
+	runID := flag.String("run-id", "", "stable identity batch ID; reuse it to measure existing password logins")
 	password := flag.String("password", "PerfPassword123!", "password login password")
 	interval := flag.Duration("resume-interval", 5*time.Second, "resume storm reconnect interval")
 	flag.Parse()
@@ -57,6 +58,9 @@ func main() {
 	}
 	if !validScenario(*scenario) {
 		log.Fatalf("unsupported scenario %q", *scenario)
+	}
+	if *runID == "" {
+		*runID = fmt.Sprintf("%d", os.Getpid())
 	}
 
 	var stats counters
@@ -76,7 +80,7 @@ func main() {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			runClient(*target, *scenario, index, *usernamePrefix, *password, *interval, deadline, &stats)
+			runClient(*target, *scenario, index, *usernamePrefix, *runID, *password, *interval, deadline, &stats)
 		}(i)
 	}
 	wg.Wait()
@@ -93,9 +97,9 @@ func validScenario(scenario string) bool {
 	}
 }
 
-func runClient(target, scenario string, index int, usernamePrefix, password string, resumeInterval time.Duration, deadline time.Time, stats *counters) {
-	installID := fmt.Sprintf("%s-%d-%d", usernamePrefix, os.Getpid(), index)
-	username := fmt.Sprintf("%s-%d-%d", usernamePrefix, os.Getpid(), index)
+func runClient(target, scenario string, index int, usernamePrefix, runID, password string, resumeInterval time.Duration, deadline time.Time, stats *counters) {
+	installID := fmt.Sprintf("%s-%s-%d", usernamePrefix, runID, index)
+	username := fmt.Sprintf("%s-%s-%d", usernamePrefix, runID, index)
 	var sessionID, resumeToken string
 	for time.Now().Before(deadline) {
 		connection, _, err := websocket.DefaultDialer.Dial(target, nil)
