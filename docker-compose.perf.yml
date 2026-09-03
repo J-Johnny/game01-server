@@ -1,0 +1,37 @@
+services:
+  gateway:
+    ports:
+      - "${GAME_PERF_GATEWAY_BACKEND_1_PORT:-28081}:8080"
+    environment:
+      GAME_ENVIRONMENT: performance
+      GAME_MONGO_DATABASE: game01_perf
+
+  gateway-2:
+    ports:
+      - "${GAME_PERF_GATEWAY_BACKEND_2_PORT:-28082}:8080"
+    environment:
+      GAME_ENVIRONMENT: performance
+      GAME_MONGO_DATABASE: game01_perf
+
+  nginx:
+    ports:
+      - "${GAME_PERF_GATEWAY_HTTP_PORT:-18080}:8080"
+
+  usercenter:
+    environment:
+      GAME_ENVIRONMENT: performance
+      GAME_MONGO_DATABASE: game01_perf
+
+  lobby:
+    environment:
+      GAME_ENVIRONMENT: performance
+      GAME_MONGO_DATABASE: game01_perf
+
+  battle:
+    environment:
+      GAME_ENVIRONMENT: performance
+      GAME_MONGO_DATABASE: game01_perf
+
+  mongo:
+    ports:
+      - "${GAME_PERF_MONGO_PORT:-27018}:27017"
