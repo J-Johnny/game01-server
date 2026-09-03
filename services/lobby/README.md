@@ -8,12 +8,12 @@ Lobby 使用 MongoDB 官方 Driver，并在 MongoDB Replica Set 事务中维护�
 
 | 集合 | 职责 | 关键约束 |
 | --- | --- | --- |
-| `players` | 玩家档案和默认角色标记 | `player_id` 唯一；同一账号允许多个玩家，但部分唯一索引确保最多一个 `is_default=true` |
+| `players` | 玩家档案和默认角色标记 | `player_id` 唯一；当前每个账号只创建一个默认玩家，部分唯一索引同时为未来多角色扩展保留最多一个 `is_default=true` 的约束 |
 | `player_assets` | 当前资产余额 | `player_id` 唯一；资产变更递增 `asset_version` |
 | `asset_ledger` | 不可变的结算账本 | `settlement_id` 唯一，作为 Battle 重试的幂等键 |
 | `player_snapshots` | 断线恢复所需的大厅快照 | `player_id` 唯一；每次结算后与资产同事务更新 |
 
-当前自动登录只会创建或选择账号的默认玩家。后续多角色创建、删除、选择和改名必须通过 Lobby 协议实现，不能由 Gateway 或 UserCenter 直接写入这些集合。
+当前阶段按单账号单活跃角色运行：自动登录只会创建或选择账号的默认玩家。多角色创建、删除、选择和改名暂不开发，后续如实际业务需要，必须通过 Lobby 协议实现，不能由 Gateway 或 UserCenter 直接写入这些集合。
 
 ## 内部协议
 
@@ -40,7 +40,7 @@ go test ./services/lobby/components -run MongoReplicaSet -count=1
 
 ## 尚未实现
 
-- 多角色创建、选择、删除和默认角色切换协议。
+- 多角色创建、选择、删除和默认角色切换协议（当前阶段暂不开发）。
 - 玩家昵称、头像、区域等档案变更用例及版本冲突策略。
 - 大厅会话、队伍、匹配、进入战斗和结算事件投递。
 - Battle 房间结束时对 `LobbySettlementClient` 的真实调用和失败补偿。
