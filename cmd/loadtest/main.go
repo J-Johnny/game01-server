@@ -175,9 +175,26 @@ func runClient(target, scenario string, index int, usernamePrefix, runID, passwo
 }
 
 func holdConnection(connection *websocket.Conn, deadline time.Time) {
-	remaining := time.Until(deadline)
-	if remaining > 0 {
-		time.Sleep(remaining)
+	connection.SetPingHandler(func(string) error {
+		return connection.WriteControl(websocket.PongMessage, nil, time.Now().Add(10*time.Second))
+	})
+	connection.SetPongHandler(func(string) error {
+		return connection.SetReadDeadline(time.Now().Add(30 * time.Second))
+	})
+	for time.Now().Before(deadline) {
+		readDeadline := time.Now().Add(30 * time.Second)
+		if deadline.Before(readDeadline) {
+			readDeadline = deadline
+		}
+		if err := connection.SetReadDeadline(readDeadline); err != nil {
+			return
+		}
+		if _, _, err := connection.ReadMessage(); err != nil {
+			if time.Now().Before(deadline) {
+				return
+			}
+			return
+		}
 	}
 }
 
@@ -190,8 +207,8 @@ func login(connection *websocket.Conn, provider gatewaypb.AuthProvider, installI
 	if err != nil || connection.WriteMessage(websocket.BinaryMessage, envelope) != nil {
 		return nil, false
 	}
-	responseEnvelope, err := readResponse(connection, time.Now().Add(15*time.Second))
-	if err != nil || responseEnvelope.MessageId != gatewaypb.ClientMessageId_CLIENT_MESSAGE_ID_LOGIN_RESPONSE {
+	responseEnvelope, err := readResponse(connection, gatewaypb.ClientMessageId_CLIENT_MESSAGE_ID_LOGIN_RESPONSE, 1, time.Now().Add(15*time.Second))
+	if err != nil {
 		return nil, false
 	}
 	response := &gatewaypb.LoginResponse{}
@@ -210,8 +227,8 @@ func resume(connection *websocket.Conn, sessionID, resumeToken string) (string, 
 	if err != nil || connection.WriteMessage(websocket.BinaryMessage, envelope) != nil {
 		return "", false
 	}
-	responseEnvelope, err := readResponse(connection, time.Now().Add(15*time.Second))
-	if err != nil || responseEnvelope.MessageId != gatewaypb.ClientMessageId_CLIENT_MESSAGE_ID_RESUME_RESPONSE {
+	responseEnvelope, err := readResponse(connection, gatewaypb.ClientMessageId_CLIENT_MESSAGE_ID_RESUME_RESPONSE, 2, time.Now().Add(15*time.Second))
+	if err != nil {
 		return "", false
 	}
 	response := &gatewaypb.ResumeResponse{}
@@ -221,7 +238,7 @@ func resume(connection *websocket.Conn, sessionID, resumeToken string) (string, 
 	return response.ResumeToken, true
 }
 
-func readResponse(connection *websocket.Conn, deadline time.Time) (*gatewaypb.Envelope, error) {
+func readResponse(connection *websocket.Conn, expectedMessageID gatewaypb.ClientMessageId, requestID uint64, deadline time.Time) (*gatewaypb.Envelope, error) {
 	if err := connection.SetReadDeadline(deadline); err != nil {
 		return nil, err
 	}
@@ -237,7 +254,9 @@ func readResponse(connection *websocket.Conn, deadline time.Time) (*gatewaypb.En
 		if err := proto.Unmarshal(payload, envelope); err != nil {
 			continue
 		}
-		return envelope, nil
+		if envelope.MessageId == expectedMessageID && envelope.RequestId == requestID {
+			return envelope, nil
+		}
 	}
 }
 
