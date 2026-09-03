@@ -2,6 +2,8 @@
 
 Performance testing uses a separate Compose project so its Redis, MongoDB, etcd, volumes, and MongoDB database are not shared with the development environment.
 
+The performance override uses `mongo:7` so the isolated environment remains compatible with cloud hosts running Linux kernel 6.19 or newer. The standard development Compose configuration continues to use its declared MongoDB version.
+
 ## Start the Isolated Environment
 
 Run from `server/`:

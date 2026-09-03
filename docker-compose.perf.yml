@@ -1,4 +1,12 @@
 services:
+  mongo:
+    image: mongo:7
+    ports: !override
+      - "${GAME_PERF_MONGO_PORT:-27018}:27017"
+
+  mongo-rs-init:
+    image: mongo:7
+
   gateway:
     ports: !override
       - "${GAME_PERF_GATEWAY_BACKEND_1_PORT:-28081}:8080"
@@ -31,7 +39,3 @@ services:
     environment:
       GAME_ENVIRONMENT: performance
       GAME_MONGO_DATABASE: game01_perf
-
-  mongo:
-    ports: !override
-      - "${GAME_PERF_MONGO_PORT:-27018}:27017"
