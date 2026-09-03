@@ -37,6 +37,9 @@ func (c *counters) observeConnectFailure(err error) {
 	}
 	c.connectErrorsMu.Lock()
 	defer c.connectErrorsMu.Unlock()
+	if c.connectErrors == nil {
+		c.connectErrors = make(map[string]int64)
+	}
 	if len(c.connectErrors) >= 10 {
 		return
 	}
