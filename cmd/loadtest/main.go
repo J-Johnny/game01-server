@@ -15,17 +15,32 @@ import (
 )
 
 type counters struct {
-	connected      atomic.Int64
-	connectOK      atomic.Int64
-	connectFailed  atomic.Int64
-	requests       atomic.Int64
-	success        atomic.Int64
-	failures       atomic.Int64
-	resumes        atomic.Int64
-	resumeSuccess  atomic.Int64
-	resumeFailures atomic.Int64
-	mu             sync.Mutex
-	latencies      []time.Duration
+	connected       atomic.Int64
+	connectOK       atomic.Int64
+	connectFailed   atomic.Int64
+	requests        atomic.Int64
+	success         atomic.Int64
+	failures        atomic.Int64
+	resumes         atomic.Int64
+	resumeSuccess   atomic.Int64
+	resumeFailures  atomic.Int64
+	mu              sync.Mutex
+	latencies       []time.Duration
+	connectErrorsMu sync.Mutex
+	connectErrors   map[string]int64
+}
+
+func (c *counters) observeConnectFailure(err error) {
+	c.connectFailed.Add(1)
+	if err == nil {
+		return
+	}
+	c.connectErrorsMu.Lock()
+	defer c.connectErrorsMu.Unlock()
+	if len(c.connectErrors) >= 10 {
+		return
+	}
+	c.connectErrors[err.Error()]++
 }
 
 func (c *counters) observe(start time.Time, ok bool) {
@@ -52,9 +67,10 @@ func main() {
 	runID := flag.String("run-id", "", "stable identity batch ID; reuse it to measure existing password logins")
 	password := flag.String("password", "PerfPassword123!", "password login password")
 	interval := flag.Duration("resume-interval", 5*time.Second, "resume storm reconnect interval")
+	dialRetries := flag.Int("dial-retries", 3, "maximum WebSocket handshake attempts for one connection")
 	flag.Parse()
-	if *connections <= 0 || *ramp <= 0 || *duration <= 0 {
-		log.Fatal("connections, ramp-per-second and duration must be positive")
+	if *connections <= 0 || *ramp <= 0 || *duration <= 0 || *dialRetries <= 0 {
+		log.Fatal("connections, ramp-per-second, duration and dial-retries must be positive")
 	}
 	if !validScenario(*scenario) {
 		log.Fatalf("unsupported scenario %q", *scenario)
@@ -80,7 +96,7 @@ func main() {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			runClient(*target, *scenario, index, *usernamePrefix, *runID, *password, *interval, deadline, &stats)
+			runClient(*target, *scenario, index, *usernamePrefix, *runID, *password, *interval, *dialRetries, deadline, &stats)
 		}(i)
 	}
 	wg.Wait()
@@ -97,16 +113,14 @@ func validScenario(scenario string) bool {
 	}
 }
 
-func runClient(target, scenario string, index int, usernamePrefix, runID, password string, resumeInterval time.Duration, deadline time.Time, stats *counters) {
+func runClient(target, scenario string, index int, usernamePrefix, runID, password string, resumeInterval time.Duration, dialRetries int, deadline time.Time, stats *counters) {
 	installID := fmt.Sprintf("%s-%s-%d", usernamePrefix, runID, index)
 	username := fmt.Sprintf("%s-%s-%d", usernamePrefix, runID, index)
 	var sessionID, resumeToken string
 	for time.Now().Before(deadline) {
-		connection, _, err := websocket.DefaultDialer.Dial(target, nil)
+		connection, err := dial(target, dialRetries, stats)
 		if err != nil {
-			stats.connectFailed.Add(1)
-			time.Sleep(100 * time.Millisecond)
-			continue
+			return
 		}
 		stats.connected.Add(1)
 		stats.connectOK.Add(1)
@@ -152,10 +166,10 @@ func runClient(target, scenario string, index int, usernamePrefix, runID, passwo
 			connection.Close()
 			stats.connected.Add(-1)
 			time.Sleep(resumeInterval)
-			connection, _, err = websocket.DefaultDialer.Dial(target, nil)
+			connection, err = dial(target, dialRetries, stats)
 			if err != nil {
 				stats.resumeFailures.Add(1)
-				continue
+				return
 			}
 			stats.connected.Add(1)
 			stats.resumes.Add(1)
@@ -172,6 +186,23 @@ func runClient(target, scenario string, index int, usernamePrefix, runID, passwo
 			stats.connected.Add(-1)
 		}
 	}
+}
+
+func dial(target string, retries int, stats *counters) (*websocket.Conn, error) {
+	dialer := websocket.Dialer{HandshakeTimeout: 10 * time.Second}
+	var lastErr error
+	for attempt := 0; attempt < retries; attempt++ {
+		connection, _, err := dialer.Dial(target, nil)
+		if err == nil {
+			return connection, nil
+		}
+		lastErr = err
+		stats.observeConnectFailure(err)
+		if attempt+1 < retries {
+			time.Sleep(time.Duration(attempt+1) * 100 * time.Millisecond)
+		}
+	}
+	return nil, lastErr
 }
 
 func holdConnection(connection *websocket.Conn, deadline time.Time) {
@@ -291,5 +322,14 @@ func printSummary(scenario string, stats *counters) {
 		index := int(float64(len(latencies)-1) * p)
 		return latencies[index]
 	}
-	fmt.Printf("summary scenario=%s requests=%d success=%d failures=%d p50=%s p95=%s p99=%s\n", scenario, stats.requests.Load(), stats.success.Load(), stats.failures.Load(), percentile(.50), percentile(.95), percentile(.99))
+	stats.connectErrorsMu.Lock()
+	connectErrors := make(map[string]int64, len(stats.connectErrors))
+	for message, count := range stats.connectErrors {
+		connectErrors[message] = count
+	}
+	stats.connectErrorsMu.Unlock()
+	fmt.Printf("summary scenario=%s connected=%d failed_connect=%d requests=%d success=%d failures=%d resumes=%d resume_success=%d resume_failures=%d p50=%s p95=%s p99=%s\n", scenario, stats.connectOK.Load(), stats.connectFailed.Load(), stats.requests.Load(), stats.success.Load(), stats.failures.Load(), stats.resumes.Load(), stats.resumeSuccess.Load(), stats.resumeFailures.Load(), percentile(.50), percentile(.95), percentile(.99))
+	for message, count := range connectErrors {
+		fmt.Printf("connect_error count=%d message=%q\n", count, message)
+	}
 }
