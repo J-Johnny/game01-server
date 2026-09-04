@@ -50,16 +50,15 @@ func NewClient(ctx context.Context, connection *grpc.ClientConn, service interna
 }
 
 func (c *Client) Request(ctx context.Context, envelope *internalpb.InternalEnvelope) (*internalpb.InternalEnvelope, error) {
-	if envelope.RequestId == 0 {
-		envelope.RequestId = c.nextID.Add(1)
-	}
-	envelope.Kind = internalpb.EnvelopeKind_ENVELOPE_KIND_REQUEST
+	request := proto.Clone(envelope).(*internalpb.InternalEnvelope)
+	request.RequestId = c.nextID.Add(1)
+	request.Kind = internalpb.EnvelopeKind_ENVELOPE_KIND_REQUEST
 	response := make(chan *internalpb.InternalEnvelope, 1)
 	c.mu.Lock()
-	c.requests[envelope.RequestId] = response
+	c.requests[request.RequestId] = response
 	c.mu.Unlock()
-	defer func() { c.mu.Lock(); delete(c.requests, envelope.RequestId); c.mu.Unlock() }()
-	if err := c.send(envelope); err != nil {
+	defer func() { c.mu.Lock(); delete(c.requests, request.RequestId); c.mu.Unlock() }()
+	if err := c.send(request); err != nil {
 		return nil, err
 	}
 	select {

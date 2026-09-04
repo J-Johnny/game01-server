@@ -99,7 +99,7 @@ func main() {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			runClient(*target, *scenario, index, *usernamePrefix, *runID, *password, *interval, *dialRetries, deadline, &stats)
+			runClient(*target, *scenario, index, *usernamePrefix, *runID, *password, *interval, *dialRetries, deadline, os.Getpid(), &stats)
 		}(i)
 	}
 	wg.Wait()
@@ -116,7 +116,7 @@ func validScenario(scenario string) bool {
 	}
 }
 
-func runClient(target, scenario string, index int, usernamePrefix, runID, password string, resumeInterval time.Duration, dialRetries int, deadline time.Time, stats *counters) {
+func runClient(target, scenario string, index int, usernamePrefix, runID, password string, resumeInterval time.Duration, dialRetries int, deadline time.Time, requestRunID int, stats *counters) {
 	installID := fmt.Sprintf("%s-%s-%d", usernamePrefix, runID, index)
 	username := fmt.Sprintf("%s-%s-%d", usernamePrefix, runID, index)
 	var sessionID, resumeToken string
@@ -140,7 +140,7 @@ func runClient(target, scenario string, index int, usernamePrefix, runID, passwo
 				provider = gatewaypb.AuthProvider_AUTH_PROVIDER_PASSWORD
 			}
 			start := time.Now()
-			response, ok := login(connection, provider, installID, username, password)
+			response, ok := login(connection, provider, installID, username, password, requestRunID)
 			stats.observe(start, ok)
 			if ok {
 				sessionID, resumeToken = response.SessionId, response.ResumeToken
@@ -157,7 +157,7 @@ func runClient(target, scenario string, index int, usernamePrefix, runID, passwo
 		case "resume-storm":
 			if sessionID == "" {
 				start := time.Now()
-				response, ok := login(connection, gatewaypb.AuthProvider_AUTH_PROVIDER_GUEST, installID, username, password)
+				response, ok := login(connection, gatewaypb.AuthProvider_AUTH_PROVIDER_GUEST, installID, username, password, requestRunID)
 				stats.observe(start, ok)
 				if !ok {
 					connection.Close()
@@ -209,31 +209,44 @@ func dial(target string, retries int, stats *counters) (*websocket.Conn, error) 
 }
 
 func holdConnection(connection *websocket.Conn, deadline time.Time) {
+	done := make(chan struct{})
+	var writer sync.WaitGroup
+	writer.Add(1)
+	go func() {
+		defer writer.Done()
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case now := <-ticker.C:
+				if err := connection.WriteControl(websocket.PingMessage, nil, now.Add(10*time.Second)); err != nil {
+					return
+				}
+			}
+		}
+	}()
+	defer func() {
+		close(done)
+		writer.Wait()
+	}()
 	connection.SetPingHandler(func(string) error {
 		return connection.WriteControl(websocket.PongMessage, nil, time.Now().Add(10*time.Second))
 	})
 	connection.SetPongHandler(func(string) error {
-		return connection.SetReadDeadline(time.Now().Add(30 * time.Second))
+		return connection.SetReadDeadline(deadline)
 	})
-	for time.Now().Before(deadline) {
-		readDeadline := time.Now().Add(30 * time.Second)
-		if deadline.Before(readDeadline) {
-			readDeadline = deadline
-		}
-		if err := connection.SetReadDeadline(readDeadline); err != nil {
-			return
-		}
-		if _, _, err := connection.ReadMessage(); err != nil {
-			if time.Now().Before(deadline) {
-				return
-			}
-			return
-		}
+	if err := connection.SetReadDeadline(deadline); err != nil {
+		return
+	}
+	if _, _, err := connection.ReadMessage(); err != nil {
+		return
 	}
 }
 
-func login(connection *websocket.Conn, provider gatewaypb.AuthProvider, installID, username, password string) (*gatewaypb.LoginResponse, bool) {
-	payload, err := proto.Marshal(&gatewaypb.LoginRequest{Provider: provider, InstallId: installID, Username: username, Password: password, IdempotencyKey: fmt.Sprintf("loadtest-%s", installID)})
+func login(connection *websocket.Conn, provider gatewaypb.AuthProvider, installID, username, password string, requestRunID int) (*gatewaypb.LoginResponse, bool) {
+	payload, err := proto.Marshal(&gatewaypb.LoginRequest{Provider: provider, InstallId: installID, Username: username, Password: password, IdempotencyKey: fmt.Sprintf("loadtest-%s-%d", installID, requestRunID)})
 	if err != nil {
 		return nil, false
 	}
