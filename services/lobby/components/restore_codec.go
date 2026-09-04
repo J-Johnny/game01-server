@@ -1,9 +1,10 @@
 package components
 
 import (
-	"google.golang.org/protobuf/proto"
 	statepb "server/proto/gen/client/state"
 	"server/services/lobby/domain"
+
+	"google.golang.org/protobuf/proto"
 )
 
 const StateSchemaVersion uint32 = 1

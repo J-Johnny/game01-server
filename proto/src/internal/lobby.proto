@@ -10,6 +10,10 @@ enum LobbyMessageId {
   LOBBY_MESSAGE_ID_ENSURE_PLAYER_RESPONSE = 3101;
   LOBBY_MESSAGE_ID_SETTLEMENT_REQUEST = 3002;
   LOBBY_MESSAGE_ID_SETTLEMENT_RESPONSE = 3102;
+  LOBBY_MESSAGE_ID_ENTER_REQUEST = 3003;
+  LOBBY_MESSAGE_ID_ENTER_RESPONSE = 3103;
+  LOBBY_MESSAGE_ID_LEAVE_REQUEST = 3004;
+  LOBBY_MESSAGE_ID_LEAVE_RESPONSE = 3104;
 }
 
 message EnsurePlayerRequest {
@@ -38,4 +42,29 @@ message SettlementResponse {
   int64 balance = 4;
   uint64 asset_version = 5;
   bool replayed = 6;
+}
+
+message EnterLobbyRequest {
+  string player_id = 1;
+  string session_id = 2;
+  uint64 connection_epoch = 3;
+}
+
+message EnterLobbyResponse {
+  string player_id = 1;
+  string status = 2;
+  uint64 state_version = 3;
+}
+
+message LeaveLobbyRequest {
+  string player_id = 1;
+  string session_id = 2;
+  uint64 connection_epoch = 3;
+  string reason = 4;
+}
+
+message LeaveLobbyResponse {
+  string player_id = 1;
+  string status = 2;
+  uint64 state_version = 3;
 }

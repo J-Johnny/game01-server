@@ -17,17 +17,42 @@ func ensureIndexes(ctx context.Context, collection *driverMongo.Collection, inde
 }
 
 func playerIndexes() []driverMongo.IndexModel {
-	return []driverMongo.IndexModel{{Keys: bson.D{{Key: "player_id", Value: 1}}, Options: options.Index().SetUnique(true)}, {Keys: bson.D{{Key: "account_id", Value: 1}, {Key: "updated_at", Value: -1}}}, {Keys: bson.D{{Key: "account_id", Value: 1}, {Key: "is_default", Value: 1}}, Options: options.Index().SetUnique(true).SetPartialFilterExpression(bson.M{"is_default": true})}}
+	return []driverMongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "player_id", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		}, {
+			Keys:    bson.D{{Key: "account_id", Value: 1}, {Key: "updated_at", Value: -1}},
+			Options: options.Index(),
+		}, {
+			Keys:    bson.D{{Key: "account_id", Value: 1}, {Key: "is_default", Value: 1}},
+			Options: options.Index().SetUnique(true).SetPartialFilterExpression(bson.M{"is_default": true}),
+		}}
 }
 
 func assetIndexes() []driverMongo.IndexModel {
-	return []driverMongo.IndexModel{{Keys: bson.D{{Key: "player_id", Value: 1}}, Options: options.Index().SetUnique(true)}}
+	return []driverMongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "player_id", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		}}
 }
 
 func ledgerIndexes() []driverMongo.IndexModel {
-	return []driverMongo.IndexModel{{Keys: bson.D{{Key: "settlement_id", Value: 1}}, Options: options.Index().SetUnique(true)}, {Keys: bson.D{{Key: "player_id", Value: 1}, {Key: "created_at", Value: -1}}}}
+	return []driverMongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "settlement_id", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		}, {
+			Keys:    bson.D{{Key: "player_id", Value: 1}, {Key: "created_at", Value: -1}},
+			Options: options.Index(),
+		}}
 }
 
 func snapshotIndexes() []driverMongo.IndexModel {
-	return []driverMongo.IndexModel{{Keys: bson.D{{Key: "player_id", Value: 1}}, Options: options.Index().SetUnique(true)}}
+	return []driverMongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "player_id", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		}}
 }

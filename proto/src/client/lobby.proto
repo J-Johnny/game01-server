@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package game01.client.lobby;
+
+option go_package = "server/proto/gen/client;gatewaypb";
+option csharp_namespace = "Game01.Protocol.Client.Lobby";
+
+message EnterLobbyRequest {
+}
+
+message EnterLobbyResponse {
+  string player_id = 1;
+  string status = 2;
+  uint64 state_version = 3;
+}
+
+message LeaveLobbyRequest {
+  string reason = 1;
+}
+
+message LeaveLobbyResponse {
+  string player_id = 1;
+  string status = 2;
+  uint64 state_version = 3;
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"server/common/app"
 	commonmongo "server/common/mongodb"
 	"server/common/streaming"
@@ -13,6 +12,8 @@ import (
 	"server/services/lobby/components"
 	"server/services/lobby/repository"
 	mongorepository "server/services/lobby/repository/mongo"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -57,10 +58,16 @@ func (m *Module) Start(ctx context.Context) error {
 	if m.initErr != nil {
 		return m.initErr
 	}
+
 	for _, item := range []struct {
 		name   string
 		ensure func(context.Context) error
-	}{{"players", m.players.EnsureIndexes}, {"assets", m.assets.EnsureIndexes}, {"ledger", m.ledger.EnsureIndexes}, {"snapshots", m.snapshots.EnsureIndexes}} {
+	}{
+		{"players", m.players.EnsureIndexes},
+		{"assets", m.assets.EnsureIndexes},
+		{"ledger", m.ledger.EnsureIndexes},
+		{"snapshots", m.snapshots.EnsureIndexes},
+	} {
 		if err := item.ensure(ctx); err != nil {
 			return fmt.Errorf("ensure %s indexes: %w", item.name, err)
 		}
@@ -75,6 +82,7 @@ func (m *Module) RegisterInternal(router *streaming.Router) {
 	if m.component != nil {
 		m.component.RegisterInternal(router)
 	}
+
 	if m.lifecycle != nil {
 		m.lifecycle.Register(router, internalpb.ServiceType_SERVICE_TYPE_LOBBY)
 	}

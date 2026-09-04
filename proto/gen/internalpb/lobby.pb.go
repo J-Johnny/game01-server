@@ -29,6 +29,10 @@ const (
 	LobbyMessageId_LOBBY_MESSAGE_ID_ENSURE_PLAYER_RESPONSE LobbyMessageId = 3101
 	LobbyMessageId_LOBBY_MESSAGE_ID_SETTLEMENT_REQUEST     LobbyMessageId = 3002
 	LobbyMessageId_LOBBY_MESSAGE_ID_SETTLEMENT_RESPONSE    LobbyMessageId = 3102
+	LobbyMessageId_LOBBY_MESSAGE_ID_ENTER_REQUEST          LobbyMessageId = 3003
+	LobbyMessageId_LOBBY_MESSAGE_ID_ENTER_RESPONSE         LobbyMessageId = 3103
+	LobbyMessageId_LOBBY_MESSAGE_ID_LEAVE_REQUEST          LobbyMessageId = 3004
+	LobbyMessageId_LOBBY_MESSAGE_ID_LEAVE_RESPONSE         LobbyMessageId = 3104
 )
 
 // Enum value maps for LobbyMessageId.
@@ -39,6 +43,10 @@ var (
 		3101: "LOBBY_MESSAGE_ID_ENSURE_PLAYER_RESPONSE",
 		3002: "LOBBY_MESSAGE_ID_SETTLEMENT_REQUEST",
 		3102: "LOBBY_MESSAGE_ID_SETTLEMENT_RESPONSE",
+		3003: "LOBBY_MESSAGE_ID_ENTER_REQUEST",
+		3103: "LOBBY_MESSAGE_ID_ENTER_RESPONSE",
+		3004: "LOBBY_MESSAGE_ID_LEAVE_REQUEST",
+		3104: "LOBBY_MESSAGE_ID_LEAVE_RESPONSE",
 	}
 	LobbyMessageId_value = map[string]int32{
 		"LOBBY_MESSAGE_ID_UNSPECIFIED":            0,
@@ -46,6 +54,10 @@ var (
 		"LOBBY_MESSAGE_ID_ENSURE_PLAYER_RESPONSE": 3101,
 		"LOBBY_MESSAGE_ID_SETTLEMENT_REQUEST":     3002,
 		"LOBBY_MESSAGE_ID_SETTLEMENT_RESPONSE":    3102,
+		"LOBBY_MESSAGE_ID_ENTER_REQUEST":          3003,
+		"LOBBY_MESSAGE_ID_ENTER_RESPONSE":         3103,
+		"LOBBY_MESSAGE_ID_LEAVE_REQUEST":          3004,
+		"LOBBY_MESSAGE_ID_LEAVE_RESPONSE":         3104,
 	}
 )
 
@@ -348,6 +360,254 @@ func (x *SettlementResponse) GetReplayed() bool {
 	return false
 }
 
+type EnterLobbyRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId        string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SessionId       string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ConnectionEpoch uint64                 `protobuf:"varint,3,opt,name=connection_epoch,json=connectionEpoch,proto3" json:"connection_epoch,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *EnterLobbyRequest) Reset() {
+	*x = EnterLobbyRequest{}
+	mi := &file_internal_lobby_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnterLobbyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnterLobbyRequest) ProtoMessage() {}
+
+func (x *EnterLobbyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_lobby_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnterLobbyRequest.ProtoReflect.Descriptor instead.
+func (*EnterLobbyRequest) Descriptor() ([]byte, []int) {
+	return file_internal_lobby_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *EnterLobbyRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *EnterLobbyRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *EnterLobbyRequest) GetConnectionEpoch() uint64 {
+	if x != nil {
+		return x.ConnectionEpoch
+	}
+	return 0
+}
+
+type EnterLobbyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	StateVersion  uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EnterLobbyResponse) Reset() {
+	*x = EnterLobbyResponse{}
+	mi := &file_internal_lobby_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EnterLobbyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnterLobbyResponse) ProtoMessage() {}
+
+func (x *EnterLobbyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_lobby_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnterLobbyResponse.ProtoReflect.Descriptor instead.
+func (*EnterLobbyResponse) Descriptor() ([]byte, []int) {
+	return file_internal_lobby_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *EnterLobbyResponse) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *EnterLobbyResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *EnterLobbyResponse) GetStateVersion() uint64 {
+	if x != nil {
+		return x.StateVersion
+	}
+	return 0
+}
+
+type LeaveLobbyRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId        string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SessionId       string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ConnectionEpoch uint64                 `protobuf:"varint,3,opt,name=connection_epoch,json=connectionEpoch,proto3" json:"connection_epoch,omitempty"`
+	Reason          string                 `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *LeaveLobbyRequest) Reset() {
+	*x = LeaveLobbyRequest{}
+	mi := &file_internal_lobby_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveLobbyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveLobbyRequest) ProtoMessage() {}
+
+func (x *LeaveLobbyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_lobby_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveLobbyRequest.ProtoReflect.Descriptor instead.
+func (*LeaveLobbyRequest) Descriptor() ([]byte, []int) {
+	return file_internal_lobby_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *LeaveLobbyRequest) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *LeaveLobbyRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *LeaveLobbyRequest) GetConnectionEpoch() uint64 {
+	if x != nil {
+		return x.ConnectionEpoch
+	}
+	return 0
+}
+
+func (x *LeaveLobbyRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type LeaveLobbyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	StateVersion  uint64                 `protobuf:"varint,3,opt,name=state_version,json=stateVersion,proto3" json:"state_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveLobbyResponse) Reset() {
+	*x = LeaveLobbyResponse{}
+	mi := &file_internal_lobby_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveLobbyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveLobbyResponse) ProtoMessage() {}
+
+func (x *LeaveLobbyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_lobby_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveLobbyResponse.ProtoReflect.Descriptor instead.
+func (*LeaveLobbyResponse) Descriptor() ([]byte, []int) {
+	return file_internal_lobby_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *LeaveLobbyResponse) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (x *LeaveLobbyResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *LeaveLobbyResponse) GetStateVersion() uint64 {
+	if x != nil {
+		return x.StateVersion
+	}
+	return 0
+}
+
 var File_internal_lobby_proto protoreflect.FileDescriptor
 
 const file_internal_lobby_proto_rawDesc = "" +
@@ -376,13 +636,36 @@ const file_internal_lobby_proto_rawDesc = "" +
 	"asset_type\x18\x03 \x01(\tR\tassetType\x12\x18\n" +
 	"\abalance\x18\x04 \x01(\x03R\abalance\x12#\n" +
 	"\rasset_version\x18\x05 \x01(\x04R\fassetVersion\x12\x1a\n" +
-	"\breplayed\x18\x06 \x01(\bR\breplayed*\xe2\x01\n" +
+	"\breplayed\x18\x06 \x01(\bR\breplayed\"z\n" +
+	"\x11EnterLobbyRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\x12)\n" +
+	"\x10connection_epoch\x18\x03 \x01(\x04R\x0fconnectionEpoch\"n\n" +
+	"\x12EnterLobbyResponse\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12#\n" +
+	"\rstate_version\x18\x03 \x01(\x04R\fstateVersion\"\x92\x01\n" +
+	"\x11LeaveLobbyRequest\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\x12)\n" +
+	"\x10connection_epoch\x18\x03 \x01(\x04R\x0fconnectionEpoch\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\"n\n" +
+	"\x12LeaveLobbyResponse\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12#\n" +
+	"\rstate_version\x18\x03 \x01(\x04R\fstateVersion*\xf8\x02\n" +
 	"\x0eLobbyMessageId\x12 \n" +
 	"\x1cLOBBY_MESSAGE_ID_UNSPECIFIED\x10\x00\x12+\n" +
 	"&LOBBY_MESSAGE_ID_ENSURE_PLAYER_REQUEST\x10\xb9\x17\x12,\n" +
 	"'LOBBY_MESSAGE_ID_ENSURE_PLAYER_RESPONSE\x10\x9d\x18\x12(\n" +
 	"#LOBBY_MESSAGE_ID_SETTLEMENT_REQUEST\x10\xba\x17\x12)\n" +
-	"$LOBBY_MESSAGE_ID_SETTLEMENT_RESPONSE\x10\x9e\x18B(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
+	"$LOBBY_MESSAGE_ID_SETTLEMENT_RESPONSE\x10\x9e\x18\x12#\n" +
+	"\x1eLOBBY_MESSAGE_ID_ENTER_REQUEST\x10\xbb\x17\x12$\n" +
+	"\x1fLOBBY_MESSAGE_ID_ENTER_RESPONSE\x10\x9f\x18\x12#\n" +
+	"\x1eLOBBY_MESSAGE_ID_LEAVE_REQUEST\x10\xbc\x17\x12$\n" +
+	"\x1fLOBBY_MESSAGE_ID_LEAVE_RESPONSE\x10\xa0\x18B(Z&server/proto/gen/internalpb;internalpbb\x06proto3"
 
 var (
 	file_internal_lobby_proto_rawDescOnce sync.Once
@@ -397,13 +680,17 @@ func file_internal_lobby_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_lobby_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_lobby_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_internal_lobby_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_internal_lobby_proto_goTypes = []any{
 	(LobbyMessageId)(0),          // 0: game01.internal.LobbyMessageId
 	(*EnsurePlayerRequest)(nil),  // 1: game01.internal.EnsurePlayerRequest
 	(*EnsurePlayerResponse)(nil), // 2: game01.internal.EnsurePlayerResponse
 	(*SettlementRequest)(nil),    // 3: game01.internal.SettlementRequest
 	(*SettlementResponse)(nil),   // 4: game01.internal.SettlementResponse
+	(*EnterLobbyRequest)(nil),    // 5: game01.internal.EnterLobbyRequest
+	(*EnterLobbyResponse)(nil),   // 6: game01.internal.EnterLobbyResponse
+	(*LeaveLobbyRequest)(nil),    // 7: game01.internal.LeaveLobbyRequest
+	(*LeaveLobbyResponse)(nil),   // 8: game01.internal.LeaveLobbyResponse
 }
 var file_internal_lobby_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -424,7 +711,7 @@ func file_internal_lobby_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_lobby_proto_rawDesc), len(file_internal_lobby_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
